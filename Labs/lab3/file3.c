@@ -13,6 +13,9 @@
 
 int read(int __fd, const void *__buf, int __n);
 void write(int __fd, const void *__buf, int __n);
+char analise_entrada(char *buffer_entrada);
+int int_to_string(int n, char *buffer);
+int hexdec (char *buffer_entrada, int tamanho);
 void exit(int code);
 
 /* --- Principais funções --- */
@@ -29,13 +32,18 @@ int main()
   char buffer_saida[20];
 
   /* Read up to 20 bytes from the standard input into the str buffer */
-  int n = read(STDIN, buffer_entrada, 20);
+  int tamanho = read(STDIN, buffer_entrada, 20);
 
   // Descobre qual é a base do número de entrada
   char base = analise_entrada(buffer_entrada);
 
+  int potencia = hexdec(buffer_entrada, tamanho);
+
+  int len = int_to_string(potencia, buffer_saida);
+
   /* Write n bytes from the str buffer to the standard output */
-  write(STDOUT, buffer_saida, n);
+  write(STDOUT, buffer_saida, 20);
+  write(STDOUT, "\n", 1); // Pula linha na saída
 
   return 0;
 }
@@ -55,6 +63,51 @@ char analise_entrada(char *buffer_entrada)
   else
     return 'P';
 }
+
+/* Função que converte da base hexadecimal para decimal*/
+int hexdec (char *buffer_entrada, int tamanho)
+{
+  // Como usaremos uma somatória, o valor incial deve ser zero.
+  int valor_decimal = 0;
+  int potencia = tamanho;
+  return potencia;
+}
+
+/* Função que transforma inteiro em string */
+// Converte um inteiro em string (base 10)
+// Retorna o tamanho da string gerada
+int int_to_string(int n, char *buffer) {
+    int i = 0;
+    int is_negative = 0;
+
+    // Trata números negativos
+    if (n < 0) {
+        is_negative = 1;
+        n = -n;
+    }
+
+    // Extrai os dígitos de trás pra frente
+    do {
+        buffer[i++] = (n % 10) + '0'; // transforma em caractere ASCII
+        n /= 10;
+    } while (n > 0);
+
+    // Adiciona o sinal negativo, se houver
+    if (is_negative) {
+        buffer[i++] = '-';
+    }
+
+    // Inverte a string (pois foi construída ao contrário)
+    for (int j = 0; j < i / 2; j++) {
+        char temp = buffer[j];
+        buffer[j] = buffer[i - j - 1];
+        buffer[i - j - 1] = temp;
+    }
+
+    buffer[i] = '\0'; // termina a string
+    return i;         // retorna tamanho
+}
+
 
 /* Função que informa que o programa foi concluído (extraída do livro) */
 void exit(int code)
