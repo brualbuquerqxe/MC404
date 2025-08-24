@@ -13,361 +13,609 @@
 
 int read(int __fd, const void *__buf, int __n);
 void write(int __fd, const void *__buf, int __n);
-char analise_entrada(char *buffer_entrada);
-void int_to_string(unsigned int n, char *buffer, int negativo);
-void decbin(unsigned int numero, char *buffer, int tamanho);
-unsigned int decimal_decimal(char *buffer_entrada, int tamanho);
-unsigned int hexdec(char *buffer_entrada, int tamanho);
-void negbin(char *buffer_binario, int tamanho);
 void exit(int code);
-int my_strlen(const char *s);
+
+void analise_entrada(char *buffer_entrada, char *buffer_decimal, char *buffer_binario, char *buffer_hexadecimal, char *buffer_decimal_invertido, int tamanho);
+unsigned int hexdec(char *buffer_entrada, int tamanho);
+int hexbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
+int int_para_string(unsigned int numero, char *buffer, int negativo);
+unsigned int decimal_numero(char *buffer_entrada, int tamanho);
+void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
+unsigned int novohexadecimal_decimal(char *buffer_hexadecimal);
+void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
+int tamanho_string(const char *s);
+void novohexadecimal(char *buffer_hexadecimal, char *novo_buffer);
+void binhex(char *buffer_binario, char *buffer_hexadecimal);
 
 /* --- Principais funções --- */
-
-// Obs: como o compilador RISC-V do simulador ALE não inclui a LibC (biblioteca padrão do C), sempre precisarei fornecer as minhas próprias funções.
 
 /* Função principal */
 int main()
 {
-  char buffer_entrada[20];
-  int tamanho = read(STDIN, buffer_entrada, 20);
-  int negativo = 0;
+	// Buffer de entrada, o qual sempre será uma string
+	char buffer_entrada[20];
 
-  char buffer_decimal[30];
-  char buffer_binario[40]; // "0b" + 32 bits + '\0'
+	// Tamanho da buffer de entrada
+	int tamanho = read(STDIN, buffer_entrada, 20);
 
-  char base = analise_entrada(buffer_entrada);
+	// Buffer de saída do valor decimal
+	char buffer_decimal[30];
 
-  if (base == 'H')
-  {
-    // Converte o número hexadecimal para decimal
-    unsigned int numero_decimal = hexdec(buffer_entrada, tamanho);
+	// Buffer de saída do valor binário
+	char buffer_binario[40];
 
-    // Converte o número decimal para binário (32 bits)
-    decbin(numero_decimal, buffer_binario, 32);
-    write(STDOUT, buffer_binario, my_strlen(buffer_binario));
-    write(STDOUT, "\n", 1);
+	// Buffer de saída do valor hexadecimal
+	char buffer_hexadecimal[30];
 
-    if (buffer_binario[2] == '1')
-    {
-      negativo = -1;
-    }
+	// Buffer de saída do valor decimal do hexadecimal ao contrário
+	char buffer_decimal_invertido[30];
 
-    // Converte e escreve o número decimal
-    int_to_string(numero_decimal, buffer_decimal, negativo);
-    write(STDOUT, buffer_decimal, my_strlen(buffer_decimal));
-    write(STDOUT, "\n", 1);
+	// Função que analisa qual é a base do número de entrada
+	analise_entrada(buffer_entrada, buffer_decimal, buffer_binario, buffer_hexadecimal, buffer_decimal_invertido, tamanho);
 
-    // Escreve a entrada hexadecimal
-    write(STDOUT, buffer_entrada, tamanho);
-    write(STDOUT, "\n", 1);
-  }
-  // Se o número for negativo
-  else if (base == 'P')
-  {
-    // Muda de string para número
-    unsigned int numero_decimal = decimal_decimal(buffer_entrada, tamanho);
-
-    // Converte o número decimal para binário (32 bits)
-    decbin(numero_decimal, buffer_binario, 32);
-    write(STDOUT, buffer_binario, my_strlen(buffer_binario));
-    write(STDOUT, "\n", 1);
-
-    // Converte e escreve o número decimal
-    int_to_string(numero_decimal, buffer_decimal, negativo);
-    write(STDOUT, buffer_decimal, my_strlen(buffer_decimal));
-    write(STDOUT, "\n", 1);
-
-    // Escreve a entrada decimal
-    write(STDOUT, buffer_entrada, tamanho);
-    write(STDOUT, "\n", 1);
-  }
-  else
-  {
-    // Muda de string para número
-    unsigned int numero_decimal = decimal_decimal(buffer_entrada, tamanho);
-
-    // Converte o número decimal para binário (32 bits)
-    decbin(numero_decimal, buffer_binario, 32);
-    negbin(buffer_binario, my_strlen(buffer_binario));
-    write(STDOUT, buffer_binario, my_strlen(buffer_binario));
-    write(STDOUT, "\n", 1);
-
-    // Converte e escreve o número decimal
-    int_to_string(numero_decimal, buffer_decimal, negativo);
-    write(STDOUT, buffer_decimal, my_strlen(buffer_decimal));
-    write(STDOUT, "\n", 1);
-
-    // Escreve a entrada decimal
-    write(STDOUT, buffer_entrada, tamanho);
-    write(STDOUT, "\n", 1);
-  }
-
-  return 0;
-}
-
-void decbinneg(char *buffer_binario, int tamanho)
-{
-  buffer_binario[0] = '0';
-  buffer_binario[1] = 'b';
-
-  int digitos = tamanho;
-  unsigned int numero_contrario[digitos];
-
-  unsigned int dividendo = numero;
-
-  // Converte decimal para binário (pela divisão por 2)
-  for (int i = 0; i < digitos; i++)
-  {
-    numero_contrario[i] = dividendo % 2;
-    dividendo = dividendo / 2;
-  }
-
-  // Inverte o vetor para formar o número final
-  for (int i = 0; i < digitos; i++)
-  {
-    buffer[i + 2] = '0' + numero_contrario[digitos - i - 1];
-  }
-
-  buffer[digitos + 2] = '\0'; // terminador de string
-  
-  // Inverte os bits
-  int i = tamanho - 1;
-  while (buffer_binario[i] == '0')
-  {
-    i--;
-  }
-
-  i--;
-
-  for (; i >= 2; i--)
-  {
-    if (buffer_binario[i] == '0')
-    {
-      buffer_binario[i] = '1';
-    }
-    else if (buffer_binario[i] == '1')
-    {
-      buffer_binario[i] = '0';
-    }
-  }
+	return 0;
 }
 
 /* Função que analisa a base do número da entrada */
-char analise_entrada(char *buffer_entrada)
+void analise_entrada(char *buffer_entrada, char *buffer_decimal, char *buffer_binario, char *buffer_hexadecimal, char *buffer_decimal_invertido, int tamanho)
 {
-  // Se o valor de entrada começar com "0x", o número está na base hexadecimal
-  if (buffer_entrada[0] == '0' && buffer_entrada[1] == 'x')
-    return 'H';
+	// Se o valor de entrada começar com "0x", o número está na base hexadecimal
+	if (buffer_entrada[0] == '0' && buffer_entrada[1] == 'x')
+	{
+		// Verificar, pelo número binário, se o número é negativo ou positivo
+		int negativo = 0;
 
-  // Se o valor de entrada começar com "-", o número está na base decimal e é negativo
-  else if (buffer_entrada[0] == '-')
-    return 'N';
+		// Remove o \n, se existir
+		if (buffer_entrada[tamanho - 1] == '\n')
+		{
+			buffer_entrada[tamanho - 1] = '\0';
+			tamanho--;
+		}
 
-  // Caso contrário, o número está na base decimal e é positivo
-  else
-    return 'P';
+		// Converte o número hexadecimal para decimal
+		unsigned int numero_decimal = hexdec(buffer_entrada, tamanho);
+
+		// Converte o número decimal para binário (32 bits)
+		negativo = hexbin(numero_decimal, buffer_binario, 32);
+
+		// Converte o número decimal em string
+		int_para_string(numero_decimal, buffer_decimal, negativo);
+
+		// Calcula o decimal do endian swap
+		unsigned int decimal_invertido = novohexadecimal_decimal(buffer_entrada);
+
+		// Converte esse decimal em string para imprimir
+		int_para_string(decimal_invertido, buffer_decimal_invertido, 0);
+
+		// Escreve os buffers de saída
+		write(STDOUT, buffer_binario, tamanho_string(buffer_binario));
+		write(STDOUT, "\n", 1);
+		write(STDOUT, buffer_decimal, tamanho_string(buffer_decimal));
+		write(STDOUT, "\n", 1);
+		write(STDOUT, buffer_entrada, tamanho_string(buffer_entrada));
+		write(STDOUT, "\n", 1);
+		write(STDOUT, buffer_decimal_invertido, tamanho_string(buffer_decimal_invertido));
+		write(STDOUT, "\n", 1);
+	}
+	// Se o valor de entrada começar com "-", o número está na base decimal e é negativo
+	else if (buffer_entrada[0] == '-')
+	{
+		// Transforma de string para número
+		unsigned int numero_decimal = decimal_numero(buffer_entrada, tamanho);
+
+		// Número binário negativo
+		negbin(numero_decimal, buffer_binario, 32);
+
+		// Número hexadecimal negativo
+		binhex(buffer_binario, buffer_hexadecimal);
+
+		// Calcula o decimal do endian swap
+		unsigned int decimal_invertido = novohexadecimal_decimal(buffer_hexadecimal);
+
+		// Converte esse decimal em string para imprimir
+		int_para_string(decimal_invertido, buffer_decimal_invertido, 0);
+
+		// Escreve os buffers de saída
+		write(STDOUT, buffer_binario, tamanho_string(buffer_binario));
+		write(STDOUT, "\n", 1);
+		write(STDOUT, buffer_entrada, tamanho_string(buffer_entrada));
+		write(STDOUT, "\n", 1);
+		write(STDOUT, buffer_hexadecimal, tamanho_string(buffer_hexadecimal));
+		write(STDOUT, "\n", 1);
+		write(STDOUT, buffer_decimal_invertido, tamanho_string(buffer_decimal_invertido));
+		write(STDOUT, "\n", 1);
+	}
+
+	// Caso contrário, o número está na base decimal e é positivo
+	else
+	{
+		// Transforma de string para número
+		unsigned int numero_decimal = decimal_numero(buffer_entrada, tamanho);
+
+		// Converte para string
+		int_para_string(numero_decimal, buffer_decimal, 0);
+
+		// Número binário positivo
+		posbin(numero_decimal, buffer_binario, 32);
+
+		// Número hexadecimal positivo
+		binhex(buffer_binario, buffer_hexadecimal);
+
+		// Calcula o decimal do endian swap
+		unsigned int decimal_invertido = novohexadecimal_decimal(buffer_hexadecimal);
+
+		// Converte esse decimal em string para imprimir
+		int_para_string(decimal_invertido, buffer_decimal_invertido, 0);
+
+		// Escreve os buffers de saída
+		write(STDOUT, buffer_binario, tamanho_string(buffer_binario));
+		write(STDOUT, "\n", 1);
+		write(STDOUT, buffer_decimal, tamanho_string(buffer_decimal));
+		write(STDOUT, "\n", 1);
+		write(STDOUT, buffer_hexadecimal, tamanho_string(buffer_hexadecimal));
+		write(STDOUT, "\n", 1);
+		write(STDOUT, buffer_decimal_invertido, tamanho_string(buffer_decimal_invertido));
+		write(STDOUT, "\n", 1);
+	}
 }
 
 /* Função que converte da base hexadecimal para decimal*/
+/* Função que converte da base hexadecimal para decimal */
 unsigned int hexdec(char *buffer_entrada, int tamanho)
 {
-  // Quantidade de digitos presente na entrada
-  int digitos = tamanho - 3;
+	int digitos = tamanho - 2;
+	unsigned int valor_decimal = 0;
 
-  // Criação do vetor que armazenará os números
-  unsigned int numero[digitos];
+	for (int i = 0; i < digitos; i++)
+	{
+		char c = buffer_entrada[i + 2];
+		unsigned int valor;
 
-  // Converte de string para inteiro
-  for (int i = 0; i < digitos; i++)
-  {
-    numero[i] = buffer_entrada[i + 2] - '0';
-  }
+		if (c >= '0' && c <= '9')
+			valor = c - '0';
+		else if (c >= 'A' && c <= 'F')
+			valor = c - 'A' + 10;
+		else if (c >= 'a' && c <= 'f')
+			valor = c - 'a' + 10;
+		else
+			valor = 0; // caractere inválido
 
-  // Como usaremos uma somatória, o valor incial deve ser zero
-  unsigned int valor_decimal = 0;
+		valor_decimal = valor_decimal * 16 + valor;
+	}
 
-  // Para cada um dos digitos, calculamos seu valor na base decimal
-  for (int i = 0; i < digitos; i++)
-  {
-    // Multiplicador para a base 16 (começa como 1)
-    int multiplicador = 1;
-
-    // Para cada um dos digitos à direita do atual, aumentamos o multiplicador
-    for (int j = i + 1; j < digitos; j++)
-    {
-      // Multiplicador aumenta de 16 em 16
-      multiplicador *= 16;
-    }
-
-    // Adiciona o valor do dígito atual ao total
-    valor_decimal += numero[i] * multiplicador;
-  }
-
-  // Retorna o valor decimal final
-  return valor_decimal;
+	return valor_decimal;
 }
 
-/*Função que converte da base decimal para binário*/
-void decbinpos(unsigned int numero, char *buffer, int tamanho)
+/*Função que converte da base hexadecimal para binário por meio da base decimal*/
+int hexbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 {
-  buffer[0] = '0';
-  buffer[1] = 'b';
+	// Os dois primeiros caracteres serão utilizados para indicar que é um número binário
+	buffer_binario[0] = '0';
+	buffer_binario[1] = 'b';
 
-  int digitos = tamanho;
-  unsigned int numero_contrario[digitos];
+	// Número de dígitos do número binário (máximo 32 bits)
+	int digitos = tamanho;
 
-  unsigned int dividendo = numero;
+	// Vetor que armazenará o número contrário
+	unsigned int numero_contrario[digitos];
 
-  // Converte decimal para binário (pela divisão por 2)
-  for (int i = 0; i < digitos; i++)
-  {
-    numero_contrario[i] = dividendo % 2;
-    dividendo = dividendo / 2;
-  }
+	// Inicializa o dividendo (número que será dividido)
+	unsigned int dividendo = numero_decimal;
 
-  // Agora removemos os zeros à esquerda (no lado MSB do vetor)
-  int j = digitos - 1;
-  while (j > 0 && numero_contrario[j] == 0)
-  {
-    j--;
-  }
+	// Converte decimal para binário (pela divisão por 2)
+	for (int i = 0; i < digitos; i++)
+	{
+		// Guarda o resto da divisão por 2
+		numero_contrario[i] = dividendo % 2;
+		// Atualiza o dividendo para a próxima iteração
+		dividendo = dividendo / 2;
+	}
 
-  // Inverte o vetor até o bit mais significativo encontrado
-  int pos = 2; // começa depois de "0b"
-  for (int i = j; i >= 0; i--)
-  {
-    buffer[pos] = '0' + numero_contrario[i];
-    pos = pos + 1;
-  }
+	// Verifica se o número é negativo (bit mais significativo é 1)
+	if (numero_contrario[digitos - 1] == 1)
+	{
+		// Inverte o vetor para formar o número final
+		for (int i = 0; i < digitos; i++)
+		{
+			buffer_binario[i + 2] = '0' + numero_contrario[digitos - i - 1];
+		}
 
-  buffer[pos] = '\0'; // terminador de string
+		// Finaliza a string
+		buffer_binario[digitos + 2] = '\0';
+
+		return 1;
+	}
+
+	// Precisamos remover os zeros à esquerda (no lado MSB do vetor)
+	int j = digitos - 1;
+	while (j > 0 && numero_contrario[j] == 0)
+	{
+		j--;
+	}
+
+	// Inverte o vetor até o bit mais significativo encontrado
+	int posicao = 2; // Já que temos o "0b"
+	for (int i = j; i >= 0; i--)
+	{
+		buffer_binario[posicao] = '0' + numero_contrario[i];
+		posicao = posicao + 1;
+	}
+
+	// Indica que chegou ao fim
+	buffer_binario[posicao] = '\0';
+
+	return 0;
 }
 
 /* Função que transforma inteiro em string */
-// Converte um inteiro em string (base 10)
-// Retorna o tamanho da string gerada
-int int_to_string(unsigned int n, char *buffer, int negativo)
+int int_para_string(unsigned int numero, char *buffer, int negativo)
 {
-  int i = 0;
-  int is_negative = 0;
+	int i = 0;
 
-  // Trata números negativos
-  if (negativo < 0)
-  {
-    is_negative = 1;
-    n = -n;
-  }
+	// Trata números negativos
+	if (negativo == 1)
+	{
+		numero = -numero;
+	}
 
-  // Extrai os dígitos de trás pra frente
-  do
-  {
-    buffer[i++] = (n % 10) + '0'; // transforma em caractere ASCII
-    n /= 10;
-  } while (n > 0);
+	// Extrai os dígitos de trás pra frente
+	do
+	{
+		buffer[i++] = (numero % 10) + '0'; // transforma em caractere ASCII
+		numero /= 10;
+	} while (numero > 0);
 
-  // Adiciona o sinal negativo, se houver
-  if (is_negative)
-  {
-    buffer[i++] = '-';
-  }
+	// Adiciona o sinal negativo, se houver
+	if (negativo == 1)
+	{
+		buffer[i++] = '-';
+	}
 
-  // Inverte a string (pois foi construída ao contrário)
-  for (int j = 0; j < i / 2; j++)
-  {
-    char temp = buffer[j];
-    buffer[j] = buffer[i - j - 1];
-    buffer[i - j - 1] = temp;
-  }
+	// Inverte a string (pois foi construída ao contrário)
+	for (int j = 0; j < i / 2; j++)
+	{
+		char temp = buffer[j];
+		buffer[j] = buffer[i - j - 1];
+		buffer[i - j - 1] = temp;
+	}
 
-  buffer[i] = '\0'; // termina a string
+	buffer[i] = '\0'; // termina a string
 
-  return i;
+	return i;
 }
 
-unsigned int decimal_decimal(char *buffer_entrada, int tamanho)
+/* Função que transforma string em número decimal */
+unsigned int decimal_numero(char *buffer_entrada, int tamanho)
 {
-  unsigned int decimal = 0;
+	// Número decimal começa como zero (será acumulado)
+	unsigned int decimal = 0;
 
-  // começa do caractere 0 (ou 1 se o número tiver sinal '-')
-  int i = 0;
-  if (buffer_entrada[0] == '-')
-  {
-    i = 1; // ignora o sinal negativo
-  }
+	int i = 0;
+	// Se o número for negativo, o primeiro caractere será o sinal (deve ser ignorado)
+	if (buffer_entrada[0] == '-')
+	{
+		i = 1; // Pula a primeira casa
+	}
 
-  for (; i < tamanho; i++)
-  {
-    char c = buffer_entrada[i];
-    if (c >= '0' && c <= '9')
-    {
-      decimal = decimal * 10 + (c - '0');
-    }
-    else if (c == '\n' || c == '\0')
-    {
-      break; // terminou a string
-    }
-  }
+	// Para cada caractere, verificamos se é um dígito
+	for (; i < tamanho; i++)
+	{
+		char caracter = buffer_entrada[i];
+		if (caracter >= '0' && caracter <= '9')
+		{
+			decimal = decimal * 10 + (caracter - '0');
+		}
+		// Se não for um dígito, chegou no final da string
+		else if (caracter == '\n' || caracter == '\0')
+		{
+			break; // terminou a string
+		}
+	}
+	// Retorna o valor decimal sem sinal
+	return decimal;
+}
 
-  return decimal;
+/*Função que converte um número decimal negativo para binário*/
+/*Função que converte um número decimal negativo para binário*/
+void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
+{
+	// Os dois primeiros caracteres serão utilizados para indicar que é um número binário
+	buffer_binario[0] = '0';
+	buffer_binario[1] = 'b';
+
+	// Número de dígitos do número binário (máximo 32 bits)
+	int digitos = tamanho;
+
+	// Vetor que armazenará o número contrário
+	unsigned int numero_contrario[digitos];
+
+	// Inicializa o dividendo (número que será dividido)
+	unsigned int dividendo = numero_decimal;
+
+	// Converte decimal para binário (pela divisão por 2)
+	for (int i = 0; i < digitos; i++)
+	{
+		// Guarda o resto da divisão por 2
+		numero_contrario[i] = dividendo % 2;
+		// Atualiza o dividendo para a próxima iteração
+		dividendo = dividendo / 2;
+	}
+
+	// Inverte o vetor para formar o número final
+	for (int i = 0; i < digitos; i++)
+	{
+		buffer_binario[i + 2] = '0' + numero_contrario[digitos - i - 1];
+	}
+
+	buffer_binario[digitos + 2] = '\0'; // terminador de string
+
+	// Complemento de 2: mantenho tudo igual até chegar no primeiro 1
+	int i = digitos + 1; // último índice válido do binário (após "0b")
+	while (buffer_binario[i] == '0')
+	{
+		i--;
+	}
+
+	// Inverto todos os valores seguintes (1 -> 0 e 0 -> 1)
+	for (i = i - 1; i >= 2; i--)
+	{
+		if (buffer_binario[i] == '0')
+		{
+			buffer_binario[i] = '1';
+		}
+		else if (buffer_binario[i] == '1')
+		{
+			buffer_binario[i] = '0';
+		}
+	}
+}
+
+/*Função que converte um número decimal negativo para binário*/
+void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
+{
+	// Os dois primeiros caracteres serão utilizados para indicar que é um número binário
+	buffer_binario[0] = '0';
+	buffer_binario[1] = 'b';
+
+	// Número de dígitos do número binário (máximo 32 bits)
+	int digitos = tamanho;
+
+	// Vetor que armazenará o número contrário
+	unsigned int numero_contrario[digitos];
+
+	// Inicializa o dividendo (número que será dividido)
+	unsigned int dividendo = numero_decimal;
+
+	// Converte decimal para binário (pela divisão por 2)
+	for (int i = 0; i < digitos; i++)
+	{
+		// Guarda o resto da divisão por 2
+		numero_contrario[i] = dividendo % 2;
+		// Atualiza o dividendo para a próxima iteração
+		dividendo = dividendo / 2;
+	}
+
+	// Precisamos remover os zeros à esquerda (no lado MSB do vetor)
+	int j = digitos - 1;
+	while (j > 0 && numero_contrario[j] == 0)
+	{
+		j--;
+	}
+
+	// Inverte o vetor até o bit mais significativo encontrado
+	int posicao = 2; // Já que temos o "0b"
+	for (int i = j; i >= 0; i--)
+	{
+		buffer_binario[posicao] = '0' + numero_contrario[i];
+		posicao = posicao + 1;
+	}
+
+	// Indica que chegou ao fim
+	buffer_binario[posicao] = '\0';
+}
+
+/* Função que calcula o tamanho de uma string */
+int tamanho_string(const char *s)
+{
+	// Tamanho começa com 0
+	int len = 0;
+	// Percorre a string até encontrar o terminador
+	while (s[len] != '\0')
+	{
+		// Avança para o próximo caractere
+		len++;
+	}
+	return len;
+}
+
+/* Função que converte binário em hexadecimal */
+void binhex(char *buffer_binario, char *buffer_hexadecimal)
+{
+	buffer_hexadecimal[0] = '0';
+	buffer_hexadecimal[1] = 'x';
+
+	// Armazena o tamanho real do número binário (sem o "0b")
+	int tamanho = 0;
+	for (int i = 2; buffer_binario[i] != '\0'; i++)
+	{
+		tamanho++;
+	}
+
+	// Vetor para guardar os valores dos dígitos em hexadecimal
+	char digitos_hex[32];
+
+	// Quantidade de dígitos no novo número hexadecimal
+	int qtd_digitos = 0;
+
+	// Começa do fim da string binária (LSB)
+	int valor = 0;
+	int peso = 1;
+	int contagem = 0;
+
+	// Percorre os bits do número binário
+	for (int i = tamanho + 1; i >= 2; i--)
+	{
+		// Se o bit for 1, adiciona o valor do peso
+		if (buffer_binario[i] == '1')
+		{
+			valor = valor + peso;
+		}
+
+		// Próxima casa: mais uma potência de 2
+		peso = peso * 2;
+
+		// Quantas casas já foram passadas para esse dígito hexadecimal
+		contagem++;
+
+		// Quando juntar 4 casas ou chegar no começo, iniciamos um novo dígito hexadecimal
+		if (contagem == 4 || i == 2)
+		{
+			if (valor < 10)
+			{
+				// Número normal
+				digitos_hex[qtd_digitos] = '0' + valor;
+			}
+			else
+			{
+				// Letra precisa ser convertida em número
+				digitos_hex[qtd_digitos] = 'a' + (valor - 10);
+			}
+			// Mudamos o dígito do número hexadecimal
+			qtd_digitos++;
+
+			// Valor volta a ser zero
+			valor = 0;
+
+			// Peso é reiniciado
+			peso = 1;
+
+			// Contagem é reiniciada
+			contagem = 0;
+		}
+	}
+
+	// Agora inverte os dígitos
+	int posicao = 2;
+	for (int i = qtd_digitos - 1; i >= 0; i--)
+	{
+		// Muda a posição do dígito
+		buffer_hexadecimal[posicao] = digitos_hex[i];
+		posicao = posicao + 1;
+	}
+
+	// Encerra
+	buffer_hexadecimal[posicao] = '\0';
+}
+
+/* Função que refaz os pares do número hexadecimal (endian swap, 32 bits fixos) */
+void novohexadecimal(char *buffer_hexadecimal, char *novo_buffer)
+{
+	// Prefixo "0x"
+	novo_buffer[0] = '0';
+	novo_buffer[1] = 'x';
+
+	// Descobre o tamanho real (sem "0x")
+	int tamanho = 0;
+	for (int i = 2; buffer_hexadecimal[i] != '\0'; i++)
+	{
+		tamanho++;
+	}
+
+	// Calcula quantos zeros faltam para completar 8 dígitos
+	int faltando = 8 - tamanho;
+
+	// Cria um buffer auxiliar com 8 dígitos garantidos
+	char ajustado[11]; // "0x" + 8 dígitos + '\0'
+	ajustado[0] = '0';
+	ajustado[1] = 'x';
+
+	// Preenche zeros à esquerda
+	for (int i = 0; i < faltando; i++)
+	{
+		ajustado[2 + i] = '0';
+	}
+
+	// Copia os dígitos originais logo depois dos zeros
+	for (int i = 0; i < tamanho; i++)
+	{
+		ajustado[2 + faltando + i] = buffer_hexadecimal[2 + i];
+	}
+
+	ajustado[10] = '\0'; // fecha string (2 + 8 = 10)
+
+	// Agora ajustado tem sempre 8 dígitos
+	// Faz o swap invertendo os pares
+	int pos = 2;
+	for (int i = 3; i >= 0; i--)
+	{
+		novo_buffer[pos++] = ajustado[2 + i * 2];
+		novo_buffer[pos++] = ajustado[2 + i * 2 + 1];
+	}
+
+	novo_buffer[pos] = '\0';
+}
+
+/* Função que calcula o valor decimal de um hexadecimal invertido */
+unsigned int novohexadecimal_decimal(char *buffer_hexadecimal)
+{
+	// Tamanho fixo!!!
+	char invertido[11];
+
+	// Chama função que faz o endian swap
+	novohexadecimal(buffer_hexadecimal, invertido);
+
+	// calcula o tamanho certo da string invertida
+	int tamanho = tamanho_string(invertido);
+
+	return hexdec(invertido, tamanho);
 }
 
 /* Função que informa que o programa foi concluído (extraída do livro) */
 void exit(int code)
 {
-  __asm__ __volatile__(
-      "mv a0, %0           # return code\n"
-      "li a7, 93           # syscall exit (93) \n"
-      "ecall"
-      :           // Output list
-      : "r"(code) // Input list
-      : "a0", "a7");
+	__asm__ __volatile__(
+		"mv a0, %0           # return code\n"
+		"li a7, 93           # syscall exit (93) \n"
+		"ecall"
+		:			// Output list
+		: "r"(code) // Input list
+		: "a0", "a7");
 }
 
 /* Função que chama a função principal do programa (extraída do livro) */
 void _start()
 {
-  int ret_code = main();
-  exit(ret_code);
+	int ret_code = main();
+	exit(ret_code);
 }
 
 /* Função que lê os dados de entrada (extraída do livro) */
 int read(int __fd, const void *__buf, int __n)
 {
-  int ret_val;
-  __asm__ __volatile__(
-      "mv a0, %1           # file descriptor\n"
-      "mv a1, %2           # buffer \n"
-      "mv a2, %3           # size \n"
-      "li a7, 63           # syscall read code (63) \n"
-      "ecall               # invoke syscall \n"
-      "mv %0, a0           # move return value to ret_val\n"
-      : "=r"(ret_val)                   // Output list
-      : "r"(__fd), "r"(__buf), "r"(__n) // Input list
-      : "a0", "a1", "a2", "a7");
-  return ret_val;
+	int ret_val;
+	__asm__ __volatile__(
+		"mv a0, %1           # file descriptor\n"
+		"mv a1, %2           # buffer \n"
+		"mv a2, %3           # size \n"
+		"li a7, 63           # syscall read code (63) \n"
+		"ecall               # invoke syscall \n"
+		"mv %0, a0           # move return value to ret_val\n"
+		: "=r"(ret_val)					  // Output list
+		: "r"(__fd), "r"(__buf), "r"(__n) // Input list
+		: "a0", "a1", "a2", "a7");
+	return ret_val;
 }
 
 /* Função que escreve na saída (extraída do livro) */
 void write(int __fd, const void *__buf, int __n)
 {
-  __asm__ __volatile__(
-      "mv a0, %0           # file descriptor\n"
-      "mv a1, %1           # buffer \n"
-      "mv a2, %2           # size \n"
-      "li a7, 64           # syscall write (64) \n"
-      "ecall"
-      :                                 // Output list
-      : "r"(__fd), "r"(__buf), "r"(__n) // Input list
-      : "a0", "a1", "a2", "a7");
-}
-
-int my_strlen(const char *s)
-{
-  int len = 0;
-  while (s[len] != '\0')
-  {
-    len++;
-  }
-  return len;
+	__asm__ __volatile__(
+		"mv a0, %0           # file descriptor\n"
+		"mv a1, %1           # buffer \n"
+		"mv a2, %2           # size \n"
+		"li a7, 64           # syscall write (64) \n"
+		"ecall"
+		:								  // Output list
+		: "r"(__fd), "r"(__buf), "r"(__n) // Input list
+		: "a0", "a1", "a2", "a7");
 }
