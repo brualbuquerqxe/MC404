@@ -106,9 +106,31 @@ int main()
   return 0;
 }
 
-
-void negbin(char *buffer_binario, int tamanho)
+void decbinneg(char *buffer_binario, int tamanho)
 {
+  buffer_binario[0] = '0';
+  buffer_binario[1] = 'b';
+
+  int digitos = tamanho;
+  unsigned int numero_contrario[digitos];
+
+  unsigned int dividendo = numero;
+
+  // Converte decimal para binário (pela divisão por 2)
+  for (int i = 0; i < digitos; i++)
+  {
+    numero_contrario[i] = dividendo % 2;
+    dividendo = dividendo / 2;
+  }
+
+  // Inverte o vetor para formar o número final
+  for (int i = 0; i < digitos; i++)
+  {
+    buffer[i + 2] = '0' + numero_contrario[digitos - i - 1];
+  }
+
+  buffer[digitos + 2] = '\0'; // terminador de string
+  
   // Inverte os bits
   int i = tamanho - 1;
   while (buffer_binario[i] == '0')
@@ -117,8 +139,8 @@ void negbin(char *buffer_binario, int tamanho)
   }
 
   i--;
-  
-  for (;i >= 2; i--)
+
+  for (; i >= 2; i--)
   {
     if (buffer_binario[i] == '0')
     {
@@ -129,7 +151,6 @@ void negbin(char *buffer_binario, int tamanho)
       buffer_binario[i] = '0';
     }
   }
-
 }
 
 /* Função que analisa a base do número da entrada */
@@ -188,7 +209,7 @@ unsigned int hexdec(char *buffer_entrada, int tamanho)
 }
 
 /*Função que converte da base decimal para binário*/
-void decbin(unsigned int numero, char *buffer, int tamanho)
+void decbinpos(unsigned int numero, char *buffer, int tamanho)
 {
   buffer[0] = '0';
   buffer[1] = 'b';
@@ -205,19 +226,28 @@ void decbin(unsigned int numero, char *buffer, int tamanho)
     dividendo = dividendo / 2;
   }
 
-  // Inverte o vetor para formar o número final
-  for (int i = 0; i < digitos; i++)
+  // Agora removemos os zeros à esquerda (no lado MSB do vetor)
+  int j = digitos - 1;
+  while (j > 0 && numero_contrario[j] == 0)
   {
-    buffer[i + 2] = '0' + numero_contrario[digitos - i - 1];
+    j--;
   }
 
-  buffer[digitos + 2] = '\0'; // terminador de string
+  // Inverte o vetor até o bit mais significativo encontrado
+  int pos = 2; // começa depois de "0b"
+  for (int i = j; i >= 0; i--)
+  {
+    buffer[pos] = '0' + numero_contrario[i];
+    pos = pos + 1;
+  }
+
+  buffer[pos] = '\0'; // terminador de string
 }
 
 /* Função que transforma inteiro em string */
 // Converte um inteiro em string (base 10)
 // Retorna o tamanho da string gerada
-void int_to_string(unsigned int n, char *buffer, int negativo)
+int int_to_string(unsigned int n, char *buffer, int negativo)
 {
   int i = 0;
   int is_negative = 0;
@@ -251,6 +281,8 @@ void int_to_string(unsigned int n, char *buffer, int negativo)
   }
 
   buffer[i] = '\0'; // termina a string
+
+  return i;
 }
 
 unsigned int decimal_decimal(char *buffer_entrada, int tamanho)
@@ -259,7 +291,8 @@ unsigned int decimal_decimal(char *buffer_entrada, int tamanho)
 
   // começa do caractere 0 (ou 1 se o número tiver sinal '-')
   int i = 0;
-  if (buffer_entrada[0] == '-') {
+  if (buffer_entrada[0] == '-')
+  {
     i = 1; // ignora o sinal negativo
   }
 
@@ -278,7 +311,6 @@ unsigned int decimal_decimal(char *buffer_entrada, int tamanho)
 
   return decimal;
 }
-
 
 /* Função que informa que o programa foi concluído (extraída do livro) */
 void exit(int code)
