@@ -14,8 +14,8 @@
 int read(int __fd, const void *__buf, int __n);
 void write(int __fd, const void *__buf, int __n);
 char analise_entrada(char *buffer_entrada);
-int int_to_string(int n, char *buffer);
-int hexdec (char *buffer_entrada, int tamanho);
+int int_to_string(unsigned int n, char *buffer);
+unsigned int hexdec (char *buffer_entrada, int tamanho);
 void exit(int code);
 
 /* --- Principais funções --- */
@@ -29,7 +29,7 @@ int main()
   char buffer_entrada[20];
 
   // Define o buffer que armazena os dados de saída (20 bytes + pular linha)
-  char buffer_saida[20];
+  char buffer_saida[30];
 
   /* Read up to 20 bytes from the standard input into the str buffer */
   int tamanho = read(STDIN, buffer_entrada, 20);
@@ -37,12 +37,12 @@ int main()
   // Descobre qual é a base do número de entrada
   char base = analise_entrada(buffer_entrada);
 
-  int potencia = hexdec(buffer_entrada, tamanho);
+  unsigned int potencia = hexdec(buffer_entrada, tamanho);
 
   int len = int_to_string(potencia, buffer_saida);
 
   /* Write n bytes from the str buffer to the standard output */
-  write(STDOUT, buffer_saida, 20);
+  write(STDOUT, buffer_saida, 30);
   write(STDOUT, "\n", 1); // Pula linha na saída
 
   return 0;
@@ -64,19 +64,88 @@ char analise_entrada(char *buffer_entrada)
     return 'P';
 }
 
-/* Função que converte da base hexadecimal para decimal*/
-int hexdec (char *buffer_entrada, int tamanho)
+/* Função que converte da base decimal para binário*/
+int decbin (char *buffer_entrada, int tamanho)
 {
-  // Como usaremos uma somatória, o valor incial deve ser zero.
+  // Quantidade de digitos presente na entrada
+  int digitos = tamanho-3;
+
+  // Criação do vetor que armazenará os números
+  int numero[digitos];
+
+  // Converte de string para inteiro
+  for (int i = 0; i < digitos; i++)
+  {
+    numero[i] = buffer_entrada[i+2] - '0';
+  }
+
+  // Como usaremos uma somatória, o valor incial deve ser zero
   int valor_decimal = 0;
-  int potencia = tamanho;
-  return potencia;
+
+  // Para cada um dos digitos, calculamos seu valor na base decimal
+  for (int i = 0; i < digitos; i++)
+  {
+    // Multiplicador para a base 16 (começa como 1)
+    int multiplicador = 1;
+
+    // Para cada um dos digitos à direita do atual, aumentamos o multiplicador
+    for (int j = i+1; j < digitos; j++)
+    {
+      // Multiplicador aumenta de 16 em 16
+      multiplicador *= 16;
+    }
+
+    // Adiciona o valor do dígito atual ao total
+    valor_decimal += numero[i] * multiplicador;
+  }
+
+  // Retorna o valor decimal final
+  return valor_decimal;
+}
+
+/* Função que converte da base hexadecimal para decimal*/
+unsigned int hexdec (char *buffer_entrada, int tamanho)
+{
+  // Quantidade de digitos presente na entrada
+  int digitos = tamanho-3;
+
+  // Criação do vetor que armazenará os números
+  unsigned int numero[digitos];
+
+  // Converte de string para inteiro
+  for (int i = 0; i < digitos; i++)
+  {
+    numero[i] = buffer_entrada[i+2] - '0';
+  }
+
+  // Como usaremos uma somatória, o valor incial deve ser zero
+  unsigned int valor_decimal = 0;
+
+  // Para cada um dos digitos, calculamos seu valor na base decimal
+  for (int i = 0; i < digitos; i++)
+  {
+    // Multiplicador para a base 16 (começa como 1)
+    int multiplicador = 1;
+
+    // Para cada um dos digitos à direita do atual, aumentamos o multiplicador
+    for (int j = i+1; j < digitos; j++)
+    {
+      // Multiplicador aumenta de 16 em 16
+      multiplicador *= 16;
+    }
+
+    // Adiciona o valor do dígito atual ao total
+    valor_decimal += numero[i] * multiplicador;
+  }
+
+  // Retorna o valor decimal final
+  return valor_decimal;
 }
 
 /* Função que transforma inteiro em string */
 // Converte um inteiro em string (base 10)
 // Retorna o tamanho da string gerada
-int int_to_string(int n, char *buffer) {
+int int_to_string(unsigned int n, char *buffer) {
     int i = 0;
     int is_negative = 0;
 
