@@ -14,9 +14,13 @@
 int read(int __fd, const void *__buf, int __n);
 void write(int __fd, const void *__buf, int __n);
 char analise_entrada(char *buffer_entrada);
-int int_to_string(unsigned int n, char *buffer);
-unsigned int hexdec (char *buffer_entrada, int tamanho);
+void int_to_string(unsigned int n, char *buffer, int negativo);
+void decbin(unsigned int numero, char *buffer, int tamanho);
+unsigned int decimal_decimal(char *buffer_entrada, int tamanho);
+unsigned int hexdec(char *buffer_entrada, int tamanho);
+void negbin(char *buffer_binario, int tamanho);
 void exit(int code);
+int my_strlen(const char *s);
 
 /* --- Principais funções --- */
 
@@ -25,27 +29,107 @@ void exit(int code);
 /* Função principal */
 int main()
 {
-  // Define o buffer que armazena os dados de entrada (20 bytes + pular linha)
   char buffer_entrada[20];
-
-  // Define o buffer que armazena os dados de saída (20 bytes + pular linha)
-  char buffer_saida[30];
-
-  /* Read up to 20 bytes from the standard input into the str buffer */
   int tamanho = read(STDIN, buffer_entrada, 20);
+  int negativo = 0;
 
-  // Descobre qual é a base do número de entrada
+  char buffer_decimal[30];
+  char buffer_binario[40]; // "0b" + 32 bits + '\0'
+
   char base = analise_entrada(buffer_entrada);
 
-  unsigned int potencia = hexdec(buffer_entrada, tamanho);
+  if (base == 'H')
+  {
+    // Converte o número hexadecimal para decimal
+    unsigned int numero_decimal = hexdec(buffer_entrada, tamanho);
 
-  int len = int_to_string(potencia, buffer_saida);
+    // Converte o número decimal para binário (32 bits)
+    decbin(numero_decimal, buffer_binario, 32);
+    write(STDOUT, buffer_binario, my_strlen(buffer_binario));
+    write(STDOUT, "\n", 1);
 
-  /* Write n bytes from the str buffer to the standard output */
-  write(STDOUT, buffer_saida, 30);
-  write(STDOUT, "\n", 1); // Pula linha na saída
+    if (buffer_binario[2] == '1')
+    {
+      negativo = -1;
+    }
+
+    // Converte e escreve o número decimal
+    int_to_string(numero_decimal, buffer_decimal, negativo);
+    write(STDOUT, buffer_decimal, my_strlen(buffer_decimal));
+    write(STDOUT, "\n", 1);
+
+    // Escreve a entrada hexadecimal
+    write(STDOUT, buffer_entrada, tamanho);
+    write(STDOUT, "\n", 1);
+  }
+  // Se o número for negativo
+  else if (base == 'P')
+  {
+    // Muda de string para número
+    unsigned int numero_decimal = decimal_decimal(buffer_entrada, tamanho);
+
+    // Converte o número decimal para binário (32 bits)
+    decbin(numero_decimal, buffer_binario, 32);
+    write(STDOUT, buffer_binario, my_strlen(buffer_binario));
+    write(STDOUT, "\n", 1);
+
+    // Converte e escreve o número decimal
+    int_to_string(numero_decimal, buffer_decimal, negativo);
+    write(STDOUT, buffer_decimal, my_strlen(buffer_decimal));
+    write(STDOUT, "\n", 1);
+
+    // Escreve a entrada decimal
+    write(STDOUT, buffer_entrada, tamanho);
+    write(STDOUT, "\n", 1);
+  }
+  else
+  {
+    // Muda de string para número
+    unsigned int numero_decimal = decimal_decimal(buffer_entrada, tamanho);
+
+    // Converte o número decimal para binário (32 bits)
+    decbin(numero_decimal, buffer_binario, 32);
+    negbin(buffer_binario, my_strlen(buffer_binario));
+    write(STDOUT, buffer_binario, my_strlen(buffer_binario));
+    write(STDOUT, "\n", 1);
+
+    // Converte e escreve o número decimal
+    int_to_string(numero_decimal, buffer_decimal, negativo);
+    write(STDOUT, buffer_decimal, my_strlen(buffer_decimal));
+    write(STDOUT, "\n", 1);
+
+    // Escreve a entrada decimal
+    write(STDOUT, buffer_entrada, tamanho);
+    write(STDOUT, "\n", 1);
+  }
 
   return 0;
+}
+
+
+void negbin(char *buffer_binario, int tamanho)
+{
+  // Inverte os bits
+  int i = tamanho - 1;
+  while (buffer_binario[i] == '0')
+  {
+    i--;
+  }
+
+  i--;
+  
+  for (;i >= 2; i--)
+  {
+    if (buffer_binario[i] == '0')
+    {
+      buffer_binario[i] = '1';
+    }
+    else if (buffer_binario[i] == '1')
+    {
+      buffer_binario[i] = '0';
+    }
+  }
+
 }
 
 /* Função que analisa a base do número da entrada */
@@ -64,50 +148,11 @@ char analise_entrada(char *buffer_entrada)
     return 'P';
 }
 
-/* Função que converte da base decimal para binário*/
-int decbin (char *buffer_entrada, int tamanho)
-{
-  // Quantidade de digitos presente na entrada
-  int digitos = tamanho-3;
-
-  // Criação do vetor que armazenará os números
-  int numero[digitos];
-
-  // Converte de string para inteiro
-  for (int i = 0; i < digitos; i++)
-  {
-    numero[i] = buffer_entrada[i+2] - '0';
-  }
-
-  // Como usaremos uma somatória, o valor incial deve ser zero
-  int valor_decimal = 0;
-
-  // Para cada um dos digitos, calculamos seu valor na base decimal
-  for (int i = 0; i < digitos; i++)
-  {
-    // Multiplicador para a base 16 (começa como 1)
-    int multiplicador = 1;
-
-    // Para cada um dos digitos à direita do atual, aumentamos o multiplicador
-    for (int j = i+1; j < digitos; j++)
-    {
-      // Multiplicador aumenta de 16 em 16
-      multiplicador *= 16;
-    }
-
-    // Adiciona o valor do dígito atual ao total
-    valor_decimal += numero[i] * multiplicador;
-  }
-
-  // Retorna o valor decimal final
-  return valor_decimal;
-}
-
 /* Função que converte da base hexadecimal para decimal*/
-unsigned int hexdec (char *buffer_entrada, int tamanho)
+unsigned int hexdec(char *buffer_entrada, int tamanho)
 {
   // Quantidade de digitos presente na entrada
-  int digitos = tamanho-3;
+  int digitos = tamanho - 3;
 
   // Criação do vetor que armazenará os números
   unsigned int numero[digitos];
@@ -115,7 +160,7 @@ unsigned int hexdec (char *buffer_entrada, int tamanho)
   // Converte de string para inteiro
   for (int i = 0; i < digitos; i++)
   {
-    numero[i] = buffer_entrada[i+2] - '0';
+    numero[i] = buffer_entrada[i + 2] - '0';
   }
 
   // Como usaremos uma somatória, o valor incial deve ser zero
@@ -128,7 +173,7 @@ unsigned int hexdec (char *buffer_entrada, int tamanho)
     int multiplicador = 1;
 
     // Para cada um dos digitos à direita do atual, aumentamos o multiplicador
-    for (int j = i+1; j < digitos; j++)
+    for (int j = i + 1; j < digitos; j++)
     {
       // Multiplicador aumenta de 16 em 16
       multiplicador *= 16;
@@ -142,39 +187,96 @@ unsigned int hexdec (char *buffer_entrada, int tamanho)
   return valor_decimal;
 }
 
+/*Função que converte da base decimal para binário*/
+void decbin(unsigned int numero, char *buffer, int tamanho)
+{
+  buffer[0] = '0';
+  buffer[1] = 'b';
+
+  int digitos = tamanho;
+  unsigned int numero_contrario[digitos];
+
+  unsigned int dividendo = numero;
+
+  // Converte decimal para binário (pela divisão por 2)
+  for (int i = 0; i < digitos; i++)
+  {
+    numero_contrario[i] = dividendo % 2;
+    dividendo = dividendo / 2;
+  }
+
+  // Inverte o vetor para formar o número final
+  for (int i = 0; i < digitos; i++)
+  {
+    buffer[i + 2] = '0' + numero_contrario[digitos - i - 1];
+  }
+
+  buffer[digitos + 2] = '\0'; // terminador de string
+}
+
 /* Função que transforma inteiro em string */
 // Converte um inteiro em string (base 10)
 // Retorna o tamanho da string gerada
-int int_to_string(unsigned int n, char *buffer) {
-    int i = 0;
-    int is_negative = 0;
+void int_to_string(unsigned int n, char *buffer, int negativo)
+{
+  int i = 0;
+  int is_negative = 0;
 
-    // Trata números negativos
-    if (n < 0) {
-        is_negative = 1;
-        n = -n;
+  // Trata números negativos
+  if (negativo < 0)
+  {
+    is_negative = 1;
+    n = -n;
+  }
+
+  // Extrai os dígitos de trás pra frente
+  do
+  {
+    buffer[i++] = (n % 10) + '0'; // transforma em caractere ASCII
+    n /= 10;
+  } while (n > 0);
+
+  // Adiciona o sinal negativo, se houver
+  if (is_negative)
+  {
+    buffer[i++] = '-';
+  }
+
+  // Inverte a string (pois foi construída ao contrário)
+  for (int j = 0; j < i / 2; j++)
+  {
+    char temp = buffer[j];
+    buffer[j] = buffer[i - j - 1];
+    buffer[i - j - 1] = temp;
+  }
+
+  buffer[i] = '\0'; // termina a string
+}
+
+unsigned int decimal_decimal(char *buffer_entrada, int tamanho)
+{
+  unsigned int decimal = 0;
+
+  // começa do caractere 0 (ou 1 se o número tiver sinal '-')
+  int i = 0;
+  if (buffer_entrada[0] == '-') {
+    i = 1; // ignora o sinal negativo
+  }
+
+  for (; i < tamanho; i++)
+  {
+    char c = buffer_entrada[i];
+    if (c >= '0' && c <= '9')
+    {
+      decimal = decimal * 10 + (c - '0');
     }
-
-    // Extrai os dígitos de trás pra frente
-    do {
-        buffer[i++] = (n % 10) + '0'; // transforma em caractere ASCII
-        n /= 10;
-    } while (n > 0);
-
-    // Adiciona o sinal negativo, se houver
-    if (is_negative) {
-        buffer[i++] = '-';
+    else if (c == '\n' || c == '\0')
+    {
+      break; // terminou a string
     }
+  }
 
-    // Inverte a string (pois foi construída ao contrário)
-    for (int j = 0; j < i / 2; j++) {
-        char temp = buffer[j];
-        buffer[j] = buffer[i - j - 1];
-        buffer[i - j - 1] = temp;
-    }
-
-    buffer[i] = '\0'; // termina a string
-    return i;         // retorna tamanho
+  return decimal;
 }
 
 
@@ -226,4 +328,14 @@ void write(int __fd, const void *__buf, int __n)
       :                                 // Output list
       : "r"(__fd), "r"(__buf), "r"(__n) // Input list
       : "a0", "a1", "a2", "a7");
+}
+
+int my_strlen(const char *s)
+{
+  int len = 0;
+  while (s[len] != '\0')
+  {
+    len++;
+  }
+  return len;
 }
