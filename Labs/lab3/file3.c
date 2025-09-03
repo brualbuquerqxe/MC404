@@ -404,7 +404,7 @@ void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 	}
 }
 
-/*Função que converte um número decimal negativo para binário */
+/*Função que converte um número decimal positivo para binário */
 void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 {
 	// Os dois primeiros caracteres serão utilizados para indicar que é um número binário
