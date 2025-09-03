@@ -20,8 +20,8 @@ void write(int __fd, const void *__buf, int __n);
 // Encerra o programa
 void exit(int code);
 
-// Função que transforma string em número decimal
-void decimal_numero(char *buffer_entrada, int caracter1, int caracter2, int tamanho, char *buffer_binario);
+// Função que transforma string em número binário
+void numero_binario(char *buffer_entrada, int caracter1, int caracter2, int tamanho, char *buffer_binario);
 
 // Função que converte um número decimal negativo para binário
 void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
@@ -32,11 +32,11 @@ void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
 // Junta os números binários conforme regra do enunciado
 void empacotamento(char *numero1, char *numero2, char *numero3, char *numero4, char *numero5, int tamanho, char *buffer_hexadecimal);
 
-// Função que converte binário em hexadecimal
-void binhex(char *buffer_binario, char *buffer_hexadecimal);
-
 // Função que calcula o tamanho de uma string
 int tamanho_string(const char *s);
+
+// Função que converte um número binário para hexadecimal (retirada do livro)
+void hex_code(int val);
 
 /* --- Principais funções --- */
 
@@ -52,67 +52,57 @@ int main()
 	// Posição do primeiro caracter do número
 	int posicao_inicial = 0;
 
-	// Primeiro número da entrada
+	// Primeiro número da entrada (adicionei + 1 pq tem o "/0" ou "/n")
 	char buffer_primeiro[33];
 
-	decimal_numero(buffer_entrada, posicao_inicial, posicao_inicial + 5, 32, buffer_primeiro);
-
-	write(STDOUT, buffer_primeiro, tamanho_string(buffer_primeiro));
-	write(STDOUT, "\n", 1);
+	// Converte o primeiro número em binário
+	numero_binario(buffer_entrada, posicao_inicial, posicao_inicial + 5, 32, buffer_primeiro);
 
 	// Posição do primeiro caracter do número
 	posicao_inicial += 6;
 
-	// Segundo número da entrada
+	// Segundo número da entrada (adicionei + 1 pq tem o "/0" ou "/n")
 	char buffer_segundo[33];
 
-	decimal_numero(buffer_entrada, posicao_inicial, posicao_inicial + 5, 32, buffer_segundo);
-
-	write(STDOUT, buffer_segundo, tamanho_string(buffer_segundo));
-	write(STDOUT, "\n", 1);
+	// Converte o segundo número em binário
+	numero_binario(buffer_entrada, posicao_inicial, posicao_inicial + 5, 32, buffer_segundo);
 
 	// Posição do primeiro caracter do número
 	posicao_inicial += 6;
 
 	// Terceiro número da entrada
 	char buffer_terceiro[33];
-	decimal_numero(buffer_entrada, posicao_inicial, posicao_inicial + 5, 32, buffer_terceiro);
 
-	write(STDOUT, buffer_terceiro, tamanho_string(buffer_terceiro));
-	write(STDOUT, "\n", 1);
+	// Converte o terceiro número em binário
+	numero_binario(buffer_entrada, posicao_inicial, posicao_inicial + 5, 32, buffer_terceiro);
 
 	// Posição do primeiro caracter do número
 	posicao_inicial += 6;
 
 	// Quarto número da entrada
 	char buffer_quarto[33];
-	decimal_numero(buffer_entrada, posicao_inicial, posicao_inicial + 5, 32, buffer_quarto);
 
-	write(STDOUT, buffer_quarto, tamanho_string(buffer_quarto));
-	write(STDOUT, "\n", 1);
+	// Converte o quarto número em binário
+	numero_binario(buffer_entrada, posicao_inicial, posicao_inicial + 5, 32, buffer_quarto);
 
 	// Posição do primeiro caracter do número
 	posicao_inicial += 6;
 
 	// Quinto número da entrada
 	char buffer_quinto[33];
-	decimal_numero(buffer_entrada, posicao_inicial, posicao_inicial + 5, 32, buffer_quinto);
 
-	write(STDOUT, buffer_quinto, tamanho_string(buffer_quinto));
-	write(STDOUT, "\n", 1);
+	// Converte o quinto número em binário
+	numero_binario(buffer_entrada, posicao_inicial, posicao_inicial + 5, 32, buffer_quinto);
 
 	// Buffer para o número hexadecimal
 	char buffer_hexadecimal[33];
 
-	// Empacota os números binários.
-	empacotamento(buffer_primeiro, buffer_segundo, buffer_terceiro, buffer_quarto, buffer_quinto, tamanho, buffer_hexadecimal);
-
-	write(STDOUT, buffer_hexadecimal, tamanho_string(buffer_hexadecimal));
-	write(STDOUT, "\n", 1);
+	// Empacota os números binários e imprime o valor hexadecimal
+	empacotamento(buffer_primeiro, buffer_segundo, buffer_terceiro, buffer_quarto, buffer_quinto, 32, buffer_hexadecimal);
 }
 
-/* Função que transforma string em número decimal */
-void decimal_numero(char *buffer_entrada, int caracter1, int caracter2, int tamanho, char *binario)
+/* Função que transforma string em número binário */
+void numero_binario(char *buffer_entrada, int caracter1, int caracter2, int tamanho, char *binario)
 {
 	// Número decimal começa como zero (será acumulado)
 	unsigned int decimal = 0;
@@ -232,111 +222,66 @@ void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 void empacotamento(char *numero1, char *numero2, char *numero3, char *numero4, char *numero5, int tamanho, char *buffer_hexadecimal)
 {
 	// Definição do número binário
-	char *binario[32];
+	char binario[33];
 
 	for (int i = 0; i < tamanho; i++)
 	{
-		if (i < 11)
+		if (0 <= i && i < 11)
 			// Escreve os algarismos do quinto número inserido
-			for (int j = 31; j > 20; j--)
-				binario[i] = numero5[j];
+			binario[i] = numero5[i + 21];
 		else if (11 <= i && i < 16)
 			// Escreve os algarismos do quarto número inserido
-			for (int j = 31; j > 26; j--)
-				binario[i] = numero4[j];
+			binario[i] = numero4[i + 16];
 		else if (16 <= i && i < 21)
-			// Escreve os algarismos do quarto número inserido
-			for (int j = 31; j > 26; j--)
-				binario[i] = numero3[j];
-		else if (21 <= i < 29)
-			for (int j = 31; j >= 24; j--)
-				binario[i] = numero2[j];
+			// Escreve os algarismos do terceiro número inserido
+			binario[i] = numero3[i + 11];
+		else if (21 <= i && i < 29)
+			// Escreve os algarismos do segundo número inserido
+			binario[i] = numero2[i + 3];
 		else if (29 <= i && i < 32)
-			for (int j = 31; j >= 29; j--)
-				binario[i] = numero1[j];
-
-		// Converte de binário para hexadecimal
-		binhex(binario, buffer_hexadecimal);
+			// Escreve os algarismos do primeiro número inserido
+			binario[i] = numero1[i];
 	}
+
+	// Adiciona o terminador de string
+	binario[tamanho] = '\0';
+
+	// Converte o número binário para inteiro para ser lido por hex_code
+	unsigned int numero = 0;
+	for (int i = 0; i < 32; i++)
+	{
+		// Como se multiplicasse por 2 (move para esquerda)
+		numero <<= 1;
+		
+		if (binario[i] == '1')
+			// Coloca o último bit do número em 1
+			numero |= 1;
+	}
+
+	// Converte de binário para hexadecimal
+	hex_code(numero);
 }
 
-/* Função que converte binário em hexadecimal */
-void binhex(char *buffer_binario, char *buffer_hexadecimal)
+/* Função que converte um número binário para hexadecimal (retirada do livro)*/
+void hex_code(int val)
 {
-	buffer_hexadecimal[0] = '0';
-	buffer_hexadecimal[1] = 'x';
+	char hex[11];
+	unsigned int uval = (unsigned int)val, aux;
 
-	// Armazena o tamanho real do número binário (sem o "0b")
-	int tamanho = 0;
-	for (int i = 2; buffer_binario[i] != '\0'; i++)
+	hex[0] = '0';
+	hex[1] = 'x';
+	hex[10] = '\n';
+
+	for (int i = 9; i > 1; i--)
 	{
-		tamanho++;
+		aux = uval % 16;
+		if (aux >= 10)
+			hex[i] = aux - 10 + 'A';
+		else
+			hex[i] = aux + '0';
+		uval = uval / 16;
 	}
-
-	// Vetor para guardar os valores dos dígitos em hexadecimal
-	char digitos_hex[32];
-
-	// Quantidade de dígitos no novo número hexadecimal
-	int qtd_digitos = 0;
-
-	// Começa do fim da string binária (LSB)
-	int valor = 0;
-	int peso = 1;
-	int contagem = 0;
-
-	// Percorre os bits do número binário
-	for (int i = tamanho + 1; i >= 2; i--)
-	{
-		// Se o bit for 1, adiciona o valor do peso
-		if (buffer_binario[i] == '1')
-		{
-			valor = valor + peso;
-		}
-
-		// Próxima casa: mais uma potência de 2
-		peso = peso * 2;
-
-		// Quantas casas já foram passadas para esse dígito hexadecimal
-		contagem++;
-
-		// Quando juntar 4 casas ou chegar no começo, iniciamos um novo dígito hexadecimal
-		if (contagem == 4 || i == 2)
-		{
-			if (valor < 10)
-			{
-				// Número normal
-				digitos_hex[qtd_digitos] = '0' + valor;
-			}
-			else
-			{
-				// Letra precisa ser convertida em número
-				digitos_hex[qtd_digitos] = 'a' + (valor - 10);
-			}
-			// Mudamos o dígito do número hexadecimal
-			qtd_digitos++;
-
-			// Valor volta a ser zero
-			valor = 0;
-
-			// Peso é reiniciado
-			peso = 1;
-
-			// Contagem é reiniciada
-			contagem = 0;
-		}
-	}
-
-	// Agora inverte os dígitos
-	int posicao = 2;
-	for (int i = qtd_digitos - 1; i >= 0; i--)
-	{
-		// Muda a posição do dígito
-		buffer_hexadecimal[posicao] = digitos_hex[i];
-		posicao = posicao + 1;
-	}
-
-	// Encerra
-	buffer_hexadecimal[posicao] = '\0';
+	write(1, hex, 11);
 }
 
 /* Função que calcula o tamanho de uma string */
