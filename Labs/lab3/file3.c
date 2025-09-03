@@ -11,20 +11,46 @@
 
 /* --- Declara as principais funções --- */
 
+// Leitura do dado de entrada
 int read(int __fd, const void *__buf, int __n);
+
+// Impressão do dado
 void write(int __fd, const void *__buf, int __n);
+
+// Encerra o programa
 void exit(int code);
 
+// Determina qual é a base do número de entrada e chama as funções necessárias
 void analise_entrada(char *buffer_entrada, char *buffer_decimal, char *buffer_binario, char *buffer_hexadecimal, char *buffer_decimal_invertido, int tamanho);
+
+// Hexadecimal -> decimal
 unsigned int hexdec(char *buffer_entrada, int tamanho);
+
+// Hexadecimal -> binário
 int hexbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
+
+// Inteiro -> string
 int int_para_string(unsigned int numero, char *buffer, int negativo);
+
+// Transforma o número decimal em um valor inteiro
 unsigned int decimal_numero(char *buffer_entrada, int tamanho);
+
+// Decimal negativo -> binário negativo (complemento de 2)
 void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
+
+// Hexadecimal -> decimal
 unsigned int novohexadecimal_decimal(char *buffer_hexadecimal);
+
+// Decimal positivo -> binário positivo
 void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
+
+// Retorna o tamanho da string
 int tamanho_string(const char *s);
+
+// Novo hexadecimal (endian swap)
 void novohexadecimal(char *buffer_hexadecimal, char *novo_buffer);
+
+// Binário -> hexadecimal
 void binhex(char *buffer_binario, char *buffer_hexadecimal);
 
 /* --- Principais funções --- */
@@ -69,6 +95,7 @@ void analise_entrada(char *buffer_entrada, char *buffer_decimal, char *buffer_bi
 		if (buffer_entrada[tamanho - 1] == '\n')
 		{
 			buffer_entrada[tamanho - 1] = '\0';
+			// Já que não tem mais o \n, diminui o tamanho
 			tamanho--;
 		}
 
@@ -159,30 +186,37 @@ void analise_entrada(char *buffer_entrada, char *buffer_decimal, char *buffer_bi
 	}
 }
 
-/* Função que converte da base hexadecimal para decimal*/
 /* Função que converte da base hexadecimal para decimal */
 unsigned int hexdec(char *buffer_entrada, int tamanho)
 {
+	// Remove o prefixo "0x"
 	int digitos = tamanho - 2;
+
+	// A soma do valor decimal começa como zero
 	unsigned int valor_decimal = 0;
 
 	for (int i = 0; i < digitos; i++)
 	{
+		// Analisa cada caractere
 		char c = buffer_entrada[i + 2];
 		unsigned int valor;
 
+		// Converte cada dígito hexadecimal em seu valor decimal
 		if (c >= '0' && c <= '9')
 			valor = c - '0';
 		else if (c >= 'A' && c <= 'F')
 			valor = c - 'A' + 10;
 		else if (c >= 'a' && c <= 'f')
 			valor = c - 'a' + 10;
+		// Erro de caractere inválido
 		else
-			valor = 0; // caractere inválido
+			valor = 0;
 
+		// Mudança de base
 		valor_decimal = valor_decimal * 16 + valor;
 	}
 
+	// Retorna o valor decimal
 	return valor_decimal;
 }
 
@@ -261,7 +295,7 @@ int int_para_string(unsigned int numero, char *buffer, int negativo)
 	// Extrai os dígitos de trás pra frente
 	do
 	{
-		buffer[i++] = (numero % 10) + '0'; // transforma em caractere ASCII
+		buffer[i++] = (numero % 10) + '0'; // Transforma em caractere ASCII
 		numero /= 10;
 	} while (numero > 0);
 
@@ -279,7 +313,8 @@ int int_para_string(unsigned int numero, char *buffer, int negativo)
 		buffer[i - j - 1] = temp;
 	}
 
-	buffer[i] = '\0'; // termina a string
+	// marca o fim da string
+	buffer[i] = '\0';
 
 	return i;
 }
@@ -308,15 +343,14 @@ unsigned int decimal_numero(char *buffer_entrada, int tamanho)
 		// Se não for um dígito, chegou no final da string
 		else if (caracter == '\n' || caracter == '\0')
 		{
-			break; // terminou a string
+			break;
 		}
 	}
 	// Retorna o valor decimal sem sinal
 	return decimal;
 }
 
-/*Função que converte um número decimal negativo para binário*/
-/*Função que converte um número decimal negativo para binário*/
+/*Função que converte um número decimal negativo para binário */
 void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 {
 	// Os dois primeiros caracteres serão utilizados para indicar que é um número binário
@@ -350,7 +384,7 @@ void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 	buffer_binario[digitos + 2] = '\0'; // terminador de string
 
 	// Complemento de 2: mantenho tudo igual até chegar no primeiro 1
-	int i = digitos + 1; // último índice válido do binário (após "0b")
+	int i = digitos + 1;
 	while (buffer_binario[i] == '0')
 	{
 		i--;
@@ -370,7 +404,7 @@ void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 	}
 }
 
-/*Função que converte um número decimal negativo para binário*/
+/*Função que converte um número decimal negativo para binário */
 void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 {
 	// Os dois primeiros caracteres serão utilizados para indicar que é um número binário
@@ -395,7 +429,7 @@ void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 		dividendo = dividendo / 2;
 	}
 
-	// Precisamos remover os zeros à esquerda (no lado MSB do vetor)
+	// Precisamos remover os zeros à esquerda
 	int j = digitos - 1;
 	while (j > 0 && numero_contrario[j] == 0)
 	{
