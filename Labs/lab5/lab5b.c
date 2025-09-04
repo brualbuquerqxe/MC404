@@ -53,9 +53,6 @@ void hex_code(int val);
 // Função que compara os primeiros caracteres de duas strings
 int strcmp_custom(char *str1, char *str2, int n_char);
 
-// Junta os números binários conforme regra do enunciado
-void empacotamento(char *numero1, char *numero2, char *numero3, char *numero4, char *numero5, int tamanho, char *buffer_hexadecimal);
-
 // Função que transforma string em número binário
 void numero_binario(int decimal, int tamanho, char *binario);
 
@@ -74,6 +71,11 @@ void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
 void empacotamento_R(char *funct7, char *rs2, char *rs1, char *funct3, char *rd, char *opcode);
 
 void empacotamento_I(char *imm, char *rs1, char *funct3, char *rd, char *opcode);
+
+void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *rd, char *opcode);
+
+/* Junta os números binários conforme regra do enunciado */
+void empacotamento_U(char *imm, char *rs1, char *funct3, char *rd, char *opcode);
 
 void _start();
 
@@ -123,44 +125,23 @@ int main()
 	// Número binário do opcode
 	numero_binario(data.opcode, 7, buffer_opcode);
 
-	write(STDOUT, buffer_opcode, tamanho_string(buffer_opcode));
-	write(STDOUT, "\n", 1);
-
 	// Número binário do rd
 	numero_binario(data.rd, 5, buffer_rd);
-
-	write(STDOUT, buffer_rd, tamanho_string(buffer_rd));
-	write(STDOUT, "\n", 1);
 
 	// Número binário do rs1
 	numero_binario(data.rs1, 5, buffer_rs1);
 
-	write(STDOUT, buffer_rs1, tamanho_string(buffer_rs1));
-	write(STDOUT, "\n", 1);
-
 	// Número binário do rs2
 	numero_binario(data.rs2, 5, buffer_rs2);
-
-	write(STDOUT, buffer_rs2, tamanho_string(buffer_rs2));
-	write(STDOUT, "\n", 1);
 
 	// Número binário do imm
 	numero_binario(data.imm, 12, buffer_imm);
 
-	write(STDOUT, buffer_imm, tamanho_string(buffer_imm));
-	write(STDOUT, "\n", 1);
-
 	// Número binário do funct3
 	numero_binario(data.funct3, 3, buffer_funct3);
 
-	write(STDOUT, buffer_funct3, tamanho_string(buffer_funct3));
-	write(STDOUT, "\n", 1);
-
 	// Número binário do funct7
 	numero_binario(data.funct7, 7, buffer_funct7);
-
-	write(STDOUT, buffer_funct7, tamanho_string(buffer_funct7));
-	write(STDOUT, "\n", 1);
 
 	if (data.type == R)
 	{
@@ -169,9 +150,20 @@ int main()
 	}
 	else if (data.type == I)
 	{
-
 		// Empacotamento final
 		empacotamento_I(buffer_imm, buffer_rs1, buffer_funct3, buffer_rd, buffer_opcode);
+	}
+	else if (data.type == S)
+	{
+		write(STDOUT, buffer_imm, tamanho_string(buffer_imm));
+		write(STDOUT, "\n", 1);
+		// Empacotamento final
+		empacotamento_S(buffer_imm, buffer_rs2, buffer_rs1, buffer_funct3, buffer_rd, buffer_opcode);
+	}
+	else if (data.type == U)
+	{
+		// Empacotamento final
+		empacotamento_U(buffer_imm, buffer_rs1, buffer_funct3, buffer_rd, buffer_opcode);
 	}
 
 	return 0;
@@ -202,34 +194,22 @@ void empacotamento_R(char *funct7, char *rs2, char *rs1, char *funct3, char *rd,
 	// Definição do número binário
 	char binario[33];
 
-	// Bits 31..25 (7 bits)
-	for (int i = 0; i < 7; ++i)
-		binario[31 - i] = funct7[6 - i]; // opcionalmente na mesma ordem
-
-	// Bits 24..20 (5 bits)
-	for (int i = 0; i < 5; ++i)
-		binario[24 - i] = rs2[4 - i];
-
-	// Bits 19..15 (5 bits)
-	for (int i = 0; i < 5; ++i)
-		binario[19 - i] = rs1[4 - i];
-
-	// Bits 14..12 (3 bits)
-	for (int i = 0; i < 3; ++i)
-		binario[14 - i] = funct3[2 - i];
-
-	// Bits 11..7 (5 bits)
-	for (int i = 0; i < 5; ++i)
-		binario[11 - i] = rd[4 - i];
-
-	// Bits 6..0 (7 bits) — opcode
-	for (int i = 0; i < 7; ++i)
-		binario[6 - i] = opcode[6 - i];
-
+	for (int i = 0; i < 32; i++)
+	{
+		if (i < 7)
+			binario[i] = funct7[i];
+		else if (7 <= i && i < 12)
+			binario[i] = rs2[i - 7];
+		else if (12 <= i && i < 17)
+			binario[i] = rs1[i - 12];
+		else if (17 <= i && i < 20)
+			binario[i] = funct3[i - 17];
+		else if (20 <= i && i < 25)
+			binario[i] = rd[i - 20];
+		else
+			binario[i] = opcode[i - 25];
+	}
 	binario[32] = '\0'; // terminador
-
-	write(STDOUT, binario, tamanho_string(binario));
-	write(STDOUT, "\n", 1);
 
 	// Converte o número binário para inteiro para ser lido por hex_code
 	unsigned int numero = 0;
@@ -268,8 +248,77 @@ void empacotamento_I(char *imm, char *rs1, char *funct3, char *rd, char *opcode)
 	}
 	binario[32] = '\0'; // terminador
 
-	write(STDOUT, binario, tamanho_string(binario));
-	write(STDOUT, "\n", 1);
+	// Converte o número binário para inteiro para ser lido por hex_code
+	unsigned int numero = 0;
+	for (int i = 0; i < 32; i++)
+	{
+		// Como se multiplicasse por 2 (move para esquerda)
+		numero <<= 1;
+
+		if (binario[i] == '1')
+			// Coloca o último bit do número em 1
+			numero |= 1;
+	}
+
+	// Converte de binário para hexadecimal
+	hex_code(numero);
+}
+
+/* Junta os números binários conforme regra do enunciado */
+void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *rd, char *opcode)
+{
+	// Definição do número binário
+	char binario[33];
+
+	for (int i = 0; i < 32; i++)
+	{
+		if (i < 7)
+			binario[i] = imm[i];
+		else if (7 <= i && i < 12)
+			binario[i] = rs2[i - 7];
+		else if (12 <= i && i < 17)
+			binario[i] = rs1[i - 12];
+		else if (17 <= i && i < 20)
+			binario[i] = funct3[i - 17];
+		else if (20 <= i && i < 25)
+			binario[i] = imm[i - 13];
+		else
+			binario[i] = opcode[i - 25];
+	}
+	binario[32] = '\0'; // terminador
+
+	// Converte o número binário para inteiro para ser lido por hex_code
+	unsigned int numero = 0;
+	for (int i = 0; i < 32; i++)
+	{
+		// Como se multiplicasse por 2 (move para esquerda)
+		numero <<= 1;
+
+		if (binario[i] == '1')
+			// Coloca o último bit do número em 1
+			numero |= 1;
+	}
+
+	// Converte de binário para hexadecimal
+	hex_code(numero);
+}
+
+/* Junta os números binários conforme regra do enunciado */
+void empacotamento_U(char *imm, char *rs1, char *funct3, char *rd, char *opcode)
+{
+	// Definição do número binário
+	char binario[33];
+
+	for (int i = 0; i < 32; i++)
+	{
+		if (i < 20)
+			binario[i] = imm[i];
+		else if (20 <= i && i < 25)
+			binario[i] = rd[i - 20];
+		else
+			binario[i] = opcode[i - 25];
+	}
+	binario[32] = '\0'; // terminador
 
 	// Converte o número binário para inteiro para ser lido por hex_code
 	unsigned int numero = 0;
