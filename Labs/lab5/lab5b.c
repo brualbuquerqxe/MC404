@@ -139,9 +139,6 @@ int main()
 	// Número binário do rs2
 	numero_binario(data.rs2, 5, buffer_rs2);
 
-	write(STDOUT, buffer_rs2, tamanho_string(buffer_rs2));
-	write(STDOUT, "fora do else", tamanho_string("fora do else"));
-
 	// Número binário do imm
 	numero_binario(data.imm, 32, buffer_imm);
 
@@ -163,9 +160,6 @@ int main()
 	}
 	else if (data.type == S)
 	{
-		write(STDOUT, buffer_rs2, tamanho_string(buffer_rs2));
-		write(STDOUT, "teste2", tamanho_string("teste2"));
-
 		// Empacotamento final
 		empacotamento_S(buffer_imm, buffer_rs2, buffer_rs1, buffer_funct3, buffer_opcode);
 	}
@@ -249,7 +243,7 @@ void empacotamento_I(char *imm, char *rs1, char *funct3, char *rd, char *opcode)
 	for (int i = 0; i < 32; i++)
 	{
 		if (i < 12)
-			binario[i] = imm[i];
+			binario[i] = imm[20 + i];
 		else if (12 <= i && i < 17)
 			binario[i] = rs1[i - 12];
 		else if (17 <= i && i < 20)
@@ -300,9 +294,6 @@ void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *opcode
 	}
 	binario[32] = '\0'; // terminador
 
-	write(STDOUT, binario, tamanho_string(binario));
-	write(STDOUT, "\n", 1);
-
 	// Converte o número binário para inteiro para ser lido por hex_code
 	unsigned int numero = 0;
 	for (int i = 0; i < 32; i++)
@@ -322,29 +313,37 @@ void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *opcode
 /* Junta os números binários conforme regra do enunciado */
 void empacotamento_B(char *imm, char *rs2, char *rs1, char *funct3, char *opcode)
 {
+	write(STDOUT, imm, tamanho_string(imm)); // DEBUG
+	write(STDOUT, "\n", 1);
+
 	// Definição do número binário
 	char binario[33];
 
 	for (int i = 0; i < 32; i++)
 	{
-		if (i < 6)
-			binario[i] = imm[10 - i];
-		else if (i == 6)
-			binario[i] = imm[11];
+		if (i < 1)
+			binario[i] = imm[19];
+		else if (1 <= i && i < 7)
+			binario[i] = imm[20 + i];
 		else if (6 < i && i < 12)
 			binario[i] = rs2[i - 7];
 		else if (12 <= i && i < 17)
 			binario[i] = rs1[i - 12];
 		else if (17 <= i && i < 20)
 			binario[i] = funct3[i - 17];
-		else if (20 <= i && i < 24)
-			binario[i] = imm[24 - i];
+		else if (i == 20)
+			binario[i] = imm[27];
+		else if (21 <= i && i < 24)
+			binario[i] = imm[i + 7];
 		else if (i == 24)
-			binario[i] = imm[11];
+			binario[i] = imm[20];
 		else
 			binario[i] = opcode[i - 25];
 	}
 	binario[32] = '\0'; // terminador
+
+	write(STDOUT, binario, tamanho_string(binario)); // DEBUG
+	write(STDOUT, "\n", 1);
 
 	// Converte o número binário para inteiro para ser lido por hex_code
 	unsigned int numero = 0;
