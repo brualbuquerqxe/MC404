@@ -82,6 +82,9 @@ void empacotamento_B(char *imm, char *rs2, char *rs1, char *funct3, char *opcode
 // Função que empacota uma instrução do tipo U
 void empacotamento_U(char *imm, char *rd, char *opcode);
 
+/* Junta os números binários conforme regra do enunciado */
+void empacotamento_J(char *imm, char *rd, char *opcode);
+
 void _start();
 
 /* --- As principais funções --- */
@@ -171,6 +174,11 @@ int main()
 	else if (data.type == B)
 	{
 		empacotamento_B(buffer_imm, buffer_rs2, buffer_rs1, buffer_funct3, buffer_opcode);
+	}
+	else if (data.type == J)
+	{
+		// Empacotamento final
+		empacotamento_J(buffer_imm, buffer_rd, buffer_opcode);
 	}
 
 	return 0;
@@ -377,6 +385,51 @@ void empacotamento_U(char *imm, char *rd, char *opcode)
 			binario[i] = opcode[i - 25];
 	}
 	binario[32] = '\0'; // terminador
+
+	// Converte o número binário para inteiro para ser lido por hex_code
+	unsigned int numero = 0;
+	for (int i = 0; i < 32; i++)
+	{
+		// Como se multiplicasse por 2 (move para esquerda)
+		numero <<= 1;
+
+		if (binario[i] == '1')
+			// Coloca o último bit do número em 1
+			numero |= 1;
+	}
+
+	// Converte de binário para hexadecimal
+	hex_code(numero);
+}
+
+/* Junta os números binários conforme regra do enunciado */
+void empacotamento_J(char *imm, char *rd, char *opcode)
+{
+	write(STDOUT, imm, tamanho_string(imm)); // DEBUG
+	write(STDOUT, "\n", 1);
+
+	// Definição do número binário
+	char binario[33];
+
+	for (int i = 0; i < 32; i++)
+	{
+		if (i == 0)
+			binario[i] = imm[11];
+		else if (1 <= i && i < 11)
+			binario[i] = imm[20 + i];
+		else if (i == 11)
+			binario[i] = imm[20];
+		else if (12 <= i && i < 20)
+			binario[i] = imm[i];
+		else if (20 <= i && i < 25)
+			binario[i] = rd[i - 20];
+		else
+			binario[i] = opcode[i - 25];
+	}
+	binario[32] = '\0'; // terminador
+
+	write(STDOUT, binario, tamanho_string(binario)); // DEBUG
+	write(STDOUT, "\n", 1);
 
 	// Converte o número binário para inteiro para ser lido por hex_code
 	unsigned int numero = 0;
