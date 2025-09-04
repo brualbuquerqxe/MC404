@@ -32,8 +32,7 @@ typedef struct InstData
 		imm,
 		funct3,
 		funct7;
-	// Tipo da instrução
-	InstType type;
+	InstType type; // Define o tipo de instrução.
 } InstData;
 
 /* --- Declara as principais funções --- */
@@ -59,23 +58,29 @@ void numero_binario(int decimal, int tamanho, char *binario);
 // Parses a string with a RISC-V instruction and fills an InstData struct with the instruction's data.
 void get_inst_data(char inst[], InstData *data);
 
-/* Função que calcula o tamanho de uma string */
+// Função que calcula o tamanho de uma string
 int tamanho_string(const char *s);
 
-/*Função que converte um número decimal negativo para binário */
+// Função que converte um número decimal negativo para binário */
 void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
 
-/*Função que converte um número decimal positivo para binário */
+// Função que converte um número decimal positivo para binário
 void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
 
+// Função que empacota uma instrução do tipo R
 void empacotamento_R(char *funct7, char *rs2, char *rs1, char *funct3, char *rd, char *opcode);
 
+// Função que empacota uma instrução do tipo I
 void empacotamento_I(char *imm, char *rs1, char *funct3, char *rd, char *opcode);
 
-void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *rd, char *opcode);
+// Função que empacota uma instrução do tipo S
+void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *opcode);
 
-/* Junta os números binários conforme regra do enunciado */
-void empacotamento_U(char *imm, char *rs1, char *funct3, char *rd, char *opcode);
+// Função que empacota uma instrução do tipo B
+void empacotamento_B(char *imm, char *rs2, char *rs1, char *funct3, char *opcode);
+
+// Função que empacota uma instrução do tipo U
+void empacotamento_U(char *imm, char *rd, char *opcode);
 
 void _start();
 
@@ -102,25 +107,25 @@ int main()
 	get_inst_data(buffer_entrada, &data);
 
 	// Buffer para o opcode
-	char buffer_opcode[32];
+	char buffer_opcode[8];
 
 	// Buffer para o rd
-	char buffer_rd[32];
+	char buffer_rd[6];
 
 	// Buffer para o rs1
-	char buffer_rs1[32];
+	char buffer_rs1[6];
 
 	// Buffer para o rs2
-	char buffer_rs2[32];
+	char buffer_rs2[6];
 
 	// Buffer para o imm
-	char buffer_imm[32];
+	char buffer_imm[33];
 
 	// Buffer para o funct3
-	char buffer_funct3[32];
+	char buffer_funct3[4];
 
 	// Buffer para o funct7
-	char buffer_funct7[32];
+	char buffer_funct7[8];
 
 	// Número binário do opcode
 	numero_binario(data.opcode, 7, buffer_opcode);
@@ -134,8 +139,11 @@ int main()
 	// Número binário do rs2
 	numero_binario(data.rs2, 5, buffer_rs2);
 
+	write(STDOUT, buffer_rs2, tamanho_string(buffer_rs2));
+	write(STDOUT, "fora do else", tamanho_string("fora do else"));
+
 	// Número binário do imm
-	numero_binario(data.imm, 12, buffer_imm);
+	numero_binario(data.imm, 32, buffer_imm);
 
 	// Número binário do funct3
 	numero_binario(data.funct3, 3, buffer_funct3);
@@ -155,15 +163,20 @@ int main()
 	}
 	else if (data.type == S)
 	{
-		write(STDOUT, buffer_imm, tamanho_string(buffer_imm));
-		write(STDOUT, "\n", 1);
+		write(STDOUT, buffer_rs2, tamanho_string(buffer_rs2));
+		write(STDOUT, "teste2", tamanho_string("teste2"));
+
 		// Empacotamento final
-		empacotamento_S(buffer_imm, buffer_rs2, buffer_rs1, buffer_funct3, buffer_rd, buffer_opcode);
+		empacotamento_S(buffer_imm, buffer_rs2, buffer_rs1, buffer_funct3, buffer_opcode);
 	}
 	else if (data.type == U)
 	{
 		// Empacotamento final
-		empacotamento_U(buffer_imm, buffer_rs1, buffer_funct3, buffer_rd, buffer_opcode);
+		empacotamento_U(buffer_imm, buffer_rd, buffer_opcode);
+	}
+	else if (data.type == B)
+	{
+		empacotamento_B(buffer_imm, buffer_rs2, buffer_rs1, buffer_funct3, buffer_opcode);
 	}
 
 	return 0;
@@ -265,7 +278,7 @@ void empacotamento_I(char *imm, char *rs1, char *funct3, char *rd, char *opcode)
 }
 
 /* Junta os números binários conforme regra do enunciado */
-void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *rd, char *opcode)
+void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *opcode)
 {
 	// Definição do número binário
 	char binario[33];
@@ -273,7 +286,7 @@ void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *rd, ch
 	for (int i = 0; i < 32; i++)
 	{
 		if (i < 7)
-			binario[i] = imm[i];
+			binario[i] = imm[20 + i];
 		else if (7 <= i && i < 12)
 			binario[i] = rs2[i - 7];
 		else if (12 <= i && i < 17)
@@ -281,7 +294,53 @@ void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *rd, ch
 		else if (17 <= i && i < 20)
 			binario[i] = funct3[i - 17];
 		else if (20 <= i && i < 25)
-			binario[i] = imm[i - 13];
+			binario[i] = imm[i + 7];
+		else
+			binario[i] = opcode[i - 25];
+	}
+	binario[32] = '\0'; // terminador
+
+	write(STDOUT, binario, tamanho_string(binario));
+	write(STDOUT, "\n", 1);
+
+	// Converte o número binário para inteiro para ser lido por hex_code
+	unsigned int numero = 0;
+	for (int i = 0; i < 32; i++)
+	{
+		// Como se multiplicasse por 2 (move para esquerda)
+		numero <<= 1;
+
+		if (binario[i] == '1')
+			// Coloca o último bit do número em 1
+			numero |= 1;
+	}
+
+	// Converte de binário para hexadecimal
+	hex_code(numero);
+}
+
+/* Junta os números binários conforme regra do enunciado */
+void empacotamento_B(char *imm, char *rs2, char *rs1, char *funct3, char *opcode)
+{
+	// Definição do número binário
+	char binario[33];
+
+	for (int i = 0; i < 32; i++)
+	{
+		if (i < 6)
+			binario[i] = imm[10 - i];
+		else if (i == 6)
+			binario[i] = imm[11];
+		else if (6 < i && i < 12)
+			binario[i] = rs2[i - 7];
+		else if (12 <= i && i < 17)
+			binario[i] = rs1[i - 12];
+		else if (17 <= i && i < 20)
+			binario[i] = funct3[i - 17];
+		else if (20 <= i && i < 24)
+			binario[i] = imm[24 - i];
+		else if (i == 24)
+			binario[i] = imm[11];
 		else
 			binario[i] = opcode[i - 25];
 	}
@@ -304,7 +363,7 @@ void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *rd, ch
 }
 
 /* Junta os números binários conforme regra do enunciado */
-void empacotamento_U(char *imm, char *rs1, char *funct3, char *rd, char *opcode)
+void empacotamento_U(char *imm, char *rd, char *opcode)
 {
 	// Definição do número binário
 	char binario[33];
