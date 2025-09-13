@@ -130,7 +130,7 @@ void numero_binario(char *buffer_entrada, int caracter1, int caracter2, int tama
 		posbin(decimal, binario, tamanho);
 }
 
-/*Função que converte um número decimal negativo para binário */
+/* Função que converte um número decimal negativo para binário */
 void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 {
 
@@ -181,7 +181,7 @@ void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 	}
 }
 
-/*Função que converte um número decimal positivo para binário */
+/* Função que converte um número decimal positivo para binário */
 void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 {
 

@@ -61,12 +61,6 @@ void get_inst_data(char inst[], InstData *data);
 // Função que calcula o tamanho de uma string
 int tamanho_string(const char *s);
 
-// Função que converte um número decimal negativo para binário */
-void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
-
-// Função que converte um número decimal positivo para binário
-void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
-
 // Função que empacota uma instrução do tipo R
 void empacotamento_R(char *funct7, char *rs2, char *rs1, char *funct3, char *rd, char *opcode);
 
@@ -82,21 +76,25 @@ void empacotamento_B(char *imm, char *rs2, char *rs1, char *funct3, char *opcode
 // Função que empacota uma instrução do tipo U
 void empacotamento_U(char *imm, char *rd, char *opcode);
 
-/* Junta os números binários conforme regra do enunciado */
+// Função que empacota uma instrução do tipo J
 void empacotamento_J(char *imm, char *rd, char *opcode);
 
+// Função que calcula o tamanho de uma string
+int tamanho_string(const char *s);
+
+// Função que converte um número decimal negativo para binário
+void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
+
+// Função que converte um número decimal positivo para binário
+void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho);
+
+// Função que inicia o programa
 void _start();
 
 /* --- As principais funções --- */
 
 int main()
 {
-	/*
-		Use the provided functions and the previously implemented pack function to pack the contents
-		of a RISC-V instruction on a single int variable, paying attention to each instruction's
-		particularities and print the final result using the hex_code function.
-	*/
-
 	// Buffer de entrada, o qual sempre será uma string
 	char buffer_entrada[32];
 
@@ -152,34 +150,23 @@ int main()
 	numero_binario(data.funct7, 7, buffer_funct7);
 
 	if (data.type == R)
-	{
 		// Empacota instrução do tipo R
 		empacotamento_R(buffer_funct7, buffer_rs2, buffer_rs1, buffer_funct3, buffer_rd, buffer_opcode);
-	}
 	else if (data.type == I)
-	{
-		// Empacotamento final
+		// Empacota instrução do tipo I
 		empacotamento_I(buffer_imm, buffer_rs1, buffer_funct3, buffer_rd, buffer_opcode);
-	}
 	else if (data.type == S)
-	{
-		// Empacotamento final
+		// Empacota instrução do tipo S
 		empacotamento_S(buffer_imm, buffer_rs2, buffer_rs1, buffer_funct3, buffer_opcode);
-	}
 	else if (data.type == U)
-	{
-		// Empacotamento final
+		// Empacota instrução do tipo U
 		empacotamento_U(buffer_imm, buffer_rd, buffer_opcode);
-	}
 	else if (data.type == B)
-	{
+		// Empacota instrução do tipo B
 		empacotamento_B(buffer_imm, buffer_rs2, buffer_rs1, buffer_funct3, buffer_opcode);
-	}
 	else if (data.type == J)
-	{
-		// Empacotamento final
+		// Empacota instrução do tipo J
 		empacotamento_J(buffer_imm, buffer_rd, buffer_opcode);
-	}
 
 	return 0;
 }
@@ -224,7 +211,8 @@ void empacotamento_R(char *funct7, char *rs2, char *rs1, char *funct3, char *rd,
 		else
 			binario[i] = opcode[i - 25];
 	}
-	binario[32] = '\0'; // terminador
+	// Encerra a string
+	binario[32] = '\0';
 
 	// Converte o número binário para inteiro para ser lido por hex_code
 	unsigned int numero = 0;
@@ -261,7 +249,9 @@ void empacotamento_I(char *imm, char *rs1, char *funct3, char *rd, char *opcode)
 		else
 			binario[i] = opcode[i - 25];
 	}
-	binario[32] = '\0'; // terminador
+
+	// Encerra a string
+	binario[32] = '\0';
 
 	// Converte o número binário para inteiro para ser lido por hex_code
 	unsigned int numero = 0;
@@ -300,7 +290,9 @@ void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *opcode
 		else
 			binario[i] = opcode[i - 25];
 	}
-	binario[32] = '\0'; // terminador
+
+	// Encerra a string
+	binario[32] = '\0';
 
 	// Converte o número binário para inteiro para ser lido por hex_code
 	unsigned int numero = 0;
@@ -321,8 +313,6 @@ void empacotamento_S(char *imm, char *rs2, char *rs1, char *funct3, char *opcode
 /* Junta os números binários conforme regra do enunciado */
 void empacotamento_B(char *imm, char *rs2, char *rs1, char *funct3, char *opcode)
 {
-	write(STDOUT, imm, tamanho_string(imm)); // DEBUG
-	write(STDOUT, "\n", 1);
 
 	// Definição do número binário
 	char binario[33];
@@ -348,10 +338,9 @@ void empacotamento_B(char *imm, char *rs2, char *rs1, char *funct3, char *opcode
 		else
 			binario[i] = opcode[i - 25];
 	}
-	binario[32] = '\0'; // terminador
 
-	write(STDOUT, binario, tamanho_string(binario)); // DEBUG
-	write(STDOUT, "\n", 1);
+	// Encerra a string
+	binario[32] = '\0';
 
 	// Converte o número binário para inteiro para ser lido por hex_code
 	unsigned int numero = 0;
@@ -378,13 +367,15 @@ void empacotamento_U(char *imm, char *rd, char *opcode)
 	for (int i = 0; i < 32; i++)
 	{
 		if (i < 20)
-			binario[i] = imm[i];
+			binario[i] = imm[i + 12];
 		else if (20 <= i && i < 25)
 			binario[i] = rd[i - 20];
 		else
 			binario[i] = opcode[i - 25];
 	}
-	binario[32] = '\0'; // terminador
+
+	// Encerra a string
+	binario[32] = '\0';
 
 	// Converte o número binário para inteiro para ser lido por hex_code
 	unsigned int numero = 0;
@@ -405,8 +396,6 @@ void empacotamento_U(char *imm, char *rd, char *opcode)
 /* Junta os números binários conforme regra do enunciado */
 void empacotamento_J(char *imm, char *rd, char *opcode)
 {
-	write(STDOUT, imm, tamanho_string(imm)); // DEBUG
-	write(STDOUT, "\n", 1);
 
 	// Definição do número binário
 	char binario[33];
@@ -426,10 +415,9 @@ void empacotamento_J(char *imm, char *rd, char *opcode)
 		else
 			binario[i] = opcode[i - 25];
 	}
-	binario[32] = '\0'; // terminador
 
-	write(STDOUT, binario, tamanho_string(binario)); // DEBUG
-	write(STDOUT, "\n", 1);
+	// Encerra a string
+	binario[32] = '\0';
 
 	// Converte o número binário para inteiro para ser lido por hex_code
 	unsigned int numero = 0;
@@ -513,7 +501,7 @@ int strcmp_custom(char *str1, char *str2, int n_char)
 	return 0;
 }
 
-// Reads a string of characters representing a number in decimal base from a buffer, converts to int and updates the number of chars read from the buffer.
+// Converte decimal em inteiro
 int dec_to_int(char buffer[], int *read_chars)
 {
 	int neg = 0, val = 0, curr;
@@ -899,7 +887,7 @@ int tamanho_string(const char *s)
 		len++;
 	}
 	return len;
-};
+}
 
 /*Função que converte um número decimal negativo para binário */
 void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
@@ -951,6 +939,7 @@ void negbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 		}
 	}
 }
+
 /*Função que converte um número decimal positivo para binário */
 void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 {
@@ -986,4 +975,4 @@ void posbin(unsigned int numero_decimal, char *buffer_binario, int tamanho)
 
 	// Indica que chegou ao fim
 	buffer_binario[posicao] = '\0';
-};
+}
