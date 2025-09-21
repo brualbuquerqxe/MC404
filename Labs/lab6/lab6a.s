@@ -140,49 +140,45 @@ int_to_string:
 main: 
     call leitura # Chama a função de leitura
 
-    # === loop para processar os 4 números em-loco (no próprio buffer) ===
-    # s0 = ponteiro de leitura (início de cada bloco de 4 dígitos)
-    # s1 = ponteiro de escrita (mesmo endereço; sobrescreve com o resultado de 4 dígitos)
-
-    li   s2, 4          # Contador de 4 números que serão processados
-    la   s0, buffer     # Aponta para onde ler o primeiro número
-    la   s1, buffer     # Aponta para onde escrever o primeiro número
+    li   s2, 4 # Contador de 4 números que serão processados
+    la   s0, buffer # Aponta para onde ler o primeiro número
+    la   s1, buffer # Aponta para onde escrever o primeiro número
 
 # Início do loop para processar os 4 números
 loop_quatronumeros:
     
-    mv   a1, s0 # Move o ponteiro de leitura (s0) para a1
+    mv   a1, s0 # Move o ponteiro de leitura para a1
 
     call repeticao_conversao_int # Chama a função de extração do número
 
     call raiz_quadrada # Chama a função de cálculo da raiz quadrada
 
-    mv   a1, s1 # Move o ponteiro de escrita (s1) para a1
+    mv   a1, s1 # Move o ponteiro de escrita para a1
     call int_to_string # Chama a função de conversão de inteiro para string
 
     addi s0, s0, 4 # Avança o ponteiro de leitura para o próximo número
     addi s1, s1, 4 # Avança o ponteiro de escrita para o próximo número
 
-    # Decrementa contador; se acabou, sai; se não, pula o separador (' ' ou '\n') e continua
-    addi s2, s2, -1     # <<< MUDANÇA: decrementa s2
-    beqz s2, fim_loop   # <<< MUDANÇA: testa s2
+    addi s2, s2, -1 # Decrementa o contador de números processados
+    beqz s2, escrita_final # Se todos os 4 números foram processados, vai para a escrita final
 
-    # Pula o espaço entre números (mantém o separador original da entrada)
+    # Pula o espaço entre números
     addi s0, s0, 1
     addi s1, s1, 1
-    j    loop_impressao
+    j    loop_quatronumeros
 
-loop_impressao:
-    la   t1, buffer    # Aponta para o início do buffer
-    li   t0, ' ' # Caractere de espaço
+# Finaliza a escrita, adicionando espaços e newline
+escrita_final:
+    la   t1, buffer
+    li   t0, ' '
     sb   t0, 4(t1) # Espaço depois do primeiro número
     sb   t0, 9(t1) # Espaço depois do segundo número
     sb   t0, 14(t1) # Espaço depois do terceiro número
-    li   t0, '\n' # Caractere de nova linha
-    sb   t0, 19(t1) # Nova linha no final
+    li   t0, '\n'
+    sb   t0, 19(t1) # Newline ao final
 
-    li a0, 20 # Número de bytes que vão ser escritos
-    call escrita # Chama a função de escrita! Final!
+    li a0, 20 # Número de bytes a serem escritos (saída completa)
+    call escrita # Chama a função de escrita
 
     # Saída
     li a0, 0 # Código de saída
