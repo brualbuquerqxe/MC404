@@ -363,15 +363,15 @@ main:
 	mv       a0, s10                       # Coloca X em a0
 	call     valor_string                  # guardar o X no buffer da saída
 
-	li       a3, 6                         # Define a3 como zero
+	li       a3, 6                         # Define a3 como seis
 	mv       a0, s3                        # Coloca Y em a0
 	call     valor_string                  # guardar o Y no buffer da saída
 
-	li       t0, '\n'                      # t0 <- 10 ('\n')
-	sb       t0, 11(a2)                    # insere '\n' no final do output_buffer
+	li       t0, '\n'                      # t0 == 10 ('\n')
+	sb       t0, 11(a2)                    # Insere '\n' no final do buffer de saída
 
-	jal      escrita                       # stdout <- output_address
-	jalr     zero, s0, 0                   # retornar para _start
+	jal      escrita                       # stdout == saída
+	jalr     zero, s0, 0                   # Retorna para _start
 
 # Saída
 	li       a0, 0                         # Código de saída
