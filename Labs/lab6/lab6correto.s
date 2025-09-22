@@ -36,6 +36,8 @@ saida:
 
 	.globl   int_to_string
 
+	.globl   numero_sinal
+
 # Inicia o programa a partir do rótulo "_start".
 _start:
 	call     main
@@ -153,8 +155,21 @@ int_to_string:
 	addi     a1, a1, 4                     # Avança o ponteiro de destino em 4 posições (precisa chegar no próximo bloco de 4 dígitos)
 	ret
 
-# A função "main" chama as outras funções e finaliza o programa.
-main:
+
+
+# Verifica se o número é positivo ou negativo
+numero_sinal:
+	lb       t1, t4(t0)                    # Verifica o caracter do sinal
+	li       t2, '-'                       # Compara com o sinal "-"
+
+	beq      t1, t2, negativo              # Se o sinal do número for "-", é negativo
+	ret
+
+negativo:
+	li       t0, -1                        # Armazena -1 no t0
+	mul      a0, a0, t0                    # Multiplica o número por -1
+	ret
+
 # Função principal do programa
 main:
 # Constantes
@@ -169,12 +184,16 @@ main:
 	mv       a1, s0                        # Transfere o endereço de entrada para a1
 	li       t3, 1                         # Pula o sinal
 	jal      conversao_int
+	li       t4, 0                         # Posição do sinal
+	jal      numero_sinal
 	mv       s10, a0                       # Y_b está na posição s10
 
 # X_c == s11
 	mv       a1, s0                        # Transfere o endereço de entrada para a1
 	li       t3, 7                         # Pula o sinal
 	jal      conversao_int_signed
+	li       t4, 6                         # Posição do sinal
+	jal      numero_sinal
 	mv       s11, a0                       # X_c está na posição s11
 
 # Leitura da segunda linha com os tempos
@@ -243,6 +262,7 @@ main:
 	mv       a0, s10                       # Move para a0
 	call     raiz_quadrada                 # Calcula raiz quadrada
 	mv       s10, a0                       # Move devolta para s10
+
 
 # Imprime
 	call     imprime_saida_yx
