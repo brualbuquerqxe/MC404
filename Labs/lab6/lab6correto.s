@@ -40,6 +40,8 @@ saida:
 
 	.globl   define_x
 
+	.globl   valor_string
+
 # Inicia o programa a partir do rótulo "_start".
 _start:
 	call     main
@@ -161,7 +163,7 @@ int_to_string:
 
 # Verifica se o número é positivo ou negativo
 numero_sinal:
-	lb       t1, t4(t0)                    # Verifica o caracter do sinal
+	lb       t1, (t0)                      # Verifica o caracter do sinal
 	li       t2, '-'                       # Compara com o sinal "-"
 
 	beq      t1, t2, negativo              # Se o sinal do número for "-", é negativo
@@ -183,8 +185,8 @@ define_x:
 	mul      t2, t2, t2                    # (X - X_c)*(X - X_c)
 	add      t2, t2, t0                    #(X - X_c)*(X - X_c) + Y*Y
 	sub      t2, t2, t1                    #(X - X_c)*(X - X_c) + Y*Y - DC*DC
-	bge      t2, x0, diferenca_positivaf   # Se a diferença for maior ou igual x0
-	blt      t2, x0 diferenca_negativaf    # Se a diferença for menor que x0
+	bge      t2, x0, diferenca_positiva    # Se a diferença for maior ou igual x0
+	blt      t2, x0, diferenca_negativa    # Se a diferença for menor que x0
 	mv       s11, t3                       # Move resultado de t3 para s11
 
 # Diferença X com o sinal oposto ao original
@@ -194,26 +196,67 @@ define_x:
 	mul      t2, t2, t2                    # (X - X_c)*(X - X_c)
 	add      t2, t2, t0                    #(X - X_c)*(X - X_c) + Y*Y
 	sub      t2, t2, t1                    #(X - X_c)*(X - X_c) + Y*Y - DC*DC
-	bge      t2, x0, diferenca_positivaf   # Se a diferença for maior ou igual x0
-	blt      t2, x0 diferenca_negativaf    # Se a diferença for menor que x0
+	bge      t2, x0, diferenca_positiva    # Se a diferença for maior ou igual x0
+	blt      t2, x0, diferenca_negativa    # Se a diferença for menor que x0
 
 # Compara os dois valores (se s11 < t3, X == s10 e, caso contrário, X == t4. A partir daí, define X == s10).
-	blt      t3, s11, melhor_xf
+	blt      t3, s11, melhor_x
 	ret
 
 # Se a diferença for positiva, armazena em t3 ela mesmo!
 diferenca_positiva:
 	mv       t3, t2                        # t3 = Diferença sinal original
-	ret
 
 # Se a diferença for negativa, armazena em t3 o valor invertido!
 diferenca_negativa:
 	sub      t3, x0, t2                    # Se for menor, faz a diferença ficar positiva
-	ret
 
 # O melhor X é com o valor contrário ao que estava
 melhor_x:
 	mv       s10, t4                       # Coloca o valor de X multiplicado por -1
+	ret
+
+# Guarda o valor de X e Y
+valor_string:
+	add      t0, a2, a3                    # t0 - endereço do bloco = output_address + curr_shift
+	li       t1, 10                        # t1 <- 10
+
+	li       t2, ' '                       # t2 <- ' ' (caracter de espaço)
+	sb       t2, 5(t0)                     # output_address[t0 + 5] <- t2
+	mv       t3, a0                        # t3 <- a0
+
+	bge      a0, zero, 1f                  # Se a0 for maior ou igual a 0, pula para a label "1" à frente
+	li       t2, -1                        # t2 <- -1
+	mul      a0, a0, t2                    # Se a0 for negativo, a0 <- a0 * -1 (valor absoluto)
+
+1:
+	rem      t2, a0, t1                    # t2 <- a0 % 10
+	addi     t2, t2, 48                    # t2 <- t2 + 48
+	sb       t2, 4(t0)                     # output_address[t0 + 4] <- t2
+	div      a0, a0, t1                    # a0 <- a0 / 10
+
+	rem      t2, a0, t1                    # t2 <- a0 % 10
+	addi     t2, t2, 48                    # t2 <- t2 + 48
+	sb       t2, 3(t0)                     # output_address[t0 + 3] <- t2
+	div      a0, a0, t1                    # a0 <- a0 / 10
+
+	rem      t2, a0, t1                    # t2 <- a0 % 10
+	addi     t2, t2, 48                    # t2 <- t2 + 48
+	sb       t2, 2(t0)                     # output_address[t0 + 2] <- t2
+	div      a0, a0, t1                    # a0 <- a0 / 10
+
+	rem      t2, a0, t1                    # t2 <- a0 % 10
+	addi     t2, t2, 48                    # t2 <- t2 + 48
+	sb       t2, 1(t0)                     # output_address[t0 + 1] <- t2
+
+	blt      t3, zero, valor_negativo      # Se a0 for menor que 0, pula para a label "1" à frente
+	li       t1, '+'                       # t1 <- '+'
+	sb       t1, (t0)                      # output_address[t0] <- '+' (coloca o sinal)
+	ret
+
+valor_negativo:
+	li       t1, '-'                       # t1 <- '-'
+	sb       t1, (t0)                      # output_address[t0] <- '-' (coloca o sinal)
 	ret
 
 
@@ -222,53 +265,54 @@ main:
 # Constantes
 	li       s4, 10                        # Divisor 10
 	li       s5, 3                         # Velocidade = 3 (para 0,3)
+	li       zero, 0                       # Define o valor zero
 
 # Leitura da primeira linha com as coordenadas Y_b e X_c
-	jal      leitura_linha1
+	call     leitura_linha1
 	la       s0, linha1                    # Carrega o endereço de entrada em s0
 
 # Y_b == s10
 	mv       a1, s0                        # Transfere o endereço de entrada para a1
 	li       t3, 1                         # Pula o sinal
-	jal      conversao_int
+	call     conversao_int
 	li       t4, 0                         # Posição do sinal
-	jal      numero_sinal
+	call     numero_sinal
 	mv       s10, a0                       # Y_b está na posição s10
 
 # X_c == s11
 	mv       a1, s0                        # Transfere o endereço de entrada para a1
 	li       t3, 7                         # Pula o sinal
-	jal      conversao_int_signed
+	call     conversao_int
 	li       t4, 6                         # Posição do sinal
-	jal      numero_sinal
+	call     numero_sinal
 	mv       s11, a0                       # X_c está na posição s11
 
 # Leitura da segunda linha com os tempos
-	jal      leitura_linha2
+	call     leitura_linha2
 	la       s0, linha2                    # Carrega o endereço de entrada em s0
 
 # TA == s6
 	mv       a1, s0                        # Transfere o endereço de entrada para a1
 	li       t3, 0                         # Pula o sinal
-	jal      conversao_int
+	call     conversao_int
 	mv       s6, a0                        # TA está na posição s6
 
 # TB == s7
 	mv       a1, s0                        # Transfere o endereço de entrada para a1
 	li       t3, 5                         # Pula o sinal
-	jal      conversao_int
+	call     conversao_int
 	mv       s7, a0                        # TB está na posição s7
 
 # TC == s8
 	mv       a1, s0                        # Transfere o endereço de entrada para a1
 	li       t3, 10                        # Pula o sinal
-	jal      conversao_int
+	call     conversao_int
 	mv       s8, a0                        # TC está na posição s8
 
 # TR == s9
 	mv       a1, s0                        # Transfere o endereço de entrada para a1
 	li       t3, 15                        # Pula o sinal
-	jal      conversao_int
+	call     conversao_int
 	mv       s9, a0                        # TR está na posição s9
 
 # Distâncias medidas a partir da diferença de tempo
@@ -310,8 +354,24 @@ main:
 	call     raiz_quadrada                 # Calcula raiz quadrada
 	mv       s10, a0                       # Move de volta para s10
 
-# Imprime
-	call     imprime_saida_yx
+# Compara qual é o melhor X
+	call     define_x
+
+# Muda para string
+	la       a2, saida                     # Coloca o endereço de saída em a2
+	li       a3, 0                         # Define a3 como zero
+	mv       a0, s10                       # Coloca X em a0
+	call     valor_string                  # guardar o X no buffer da saída
+
+	li       a3, 6                         # Define a3 como zero
+	mv       a0, s3                        # Coloca Y em a0
+	call     valor_string                  # guardar o Y no buffer da saída
+
+	li       t0, '\n'                      # t0 <- 10 ('\n')
+	sb       t0, 11(a2)                    # insere '\n' no final do output_buffer
+
+	jal      escrita                       # stdout <- output_address
+	jalr     zero, s0, 0                   # retornar para _start
 
 # Saída
 	li       a0, 0                         # Código de saída
