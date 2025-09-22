@@ -163,6 +163,7 @@ int_to_string:
 
 # Verifica se o número é positivo ou negativo
 numero_sinal:
+	add      t0, a1, t4                    # t4 está com o offset do sinal
 	lb       t1, (t0)                      # Verifica o caracter do sinal
 	li       t2, '-'                       # Compara com o sinal "-"
 
@@ -371,7 +372,6 @@ main:
 	sb       t0, 11(a2)                    # Insere '\n' no final do buffer de saída
 
 	jal      escrita                       # stdout == saída
-	jalr     zero, s0, 0                   # Retorna para _start
 
 # Saída
 	li       a0, 0                         # Código de saída
