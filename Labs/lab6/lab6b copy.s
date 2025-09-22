@@ -13,7 +13,7 @@ buffer:
     .globl   leitura_linha2
     .globl   escrita
     .globl   conversao_int
-    .globl   conversao_int_signed
+
     .globl   raiz_quadrada
     .globl   main
     .globl   int_to_string_signed
@@ -72,51 +72,6 @@ repeticao_extracao_numero:
     div      t1, t1, t4                     # Atualiza multiplicador
 
     bnez     t2, repeticao_extracao_numero  # Loop enquanto restarem dígitos
-    ret
-
-# Converte número com sinal no formato [+|-]dddd usando base a1 e offset t3
-conversao_int_signed:
-    add      t6, a1, t3                     # ponteiro local p = a1 + t3
-
-    li       a0, 0
-    li       t1, 1000
-    li       t4, 10
-    li       t2, 4                          # 4 dígitos
-    li       a2, 0                          # flag negativo (0=+, 1=-)
-
-    # lê sinal
-    lbu      t0, 0(t6)
-    li       t5, '+'
-    beq      t0, t5, cis_plus
-    li       t5, '-'
-    beq      t0, t5, cis_minus
-    j        cis_after_sign
-
-cis_plus:
-    addi     t6, t6, 1                      # pula '+'
-    j        cis_after_sign
-cis_minus:
-    li       a2, 1
-    addi     t6, t6, 1                      # pula '-'
-
-cis_after_sign:
-    li       t3, 0                           # índice 0..3
-cis_loop:
-    add      t5, t6, t3
-    lbu      t0, 0(t5)
-    addi     t0, t0, -'0'
-    mul      t0, t0, t1
-    add      a0, a0, t0
-
-    addi     t3, t3, 1
-    addi     t2, t2, -1
-    div      t1, t1, t4
-    bnez     t2, cis_loop
-
-    # aplica sinal se necessário
-    beqz     a2, cis_end
-    sub      a0, x0, a0
-cis_end:
     ret
 
 # Calcula a raiz quadrada inteira de s10 (método iterativo)
