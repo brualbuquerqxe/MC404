@@ -60,7 +60,7 @@ leitura_linha2:
 	ecall
 	ret
 
-# Define o valor do p
+# Define o valor do p!
 definicao_p:
 
 	lb       t0, 0(s2)      # Carrega o valor da memória
