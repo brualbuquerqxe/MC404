@@ -188,8 +188,8 @@ define_x:
 	sub      t2, t2, t1                    #(X - X_c)*(X - X_c) + Y*Y - DC*DC
 	bge      t2, x0, diferenca_positiva    # Se a diferença for maior ou igual x0
 	blt      t2, x0, diferenca_negativa    # Se a diferença for menor que x0
-	mv       s11, t3                       # Move resultado de t3 para s11
 
+apos_abs1:
 # Diferença X com o sinal oposto ao original
 	li       t4, -1
 	mul      t4, s10, t4                   # Multiplica por -1
@@ -197,20 +197,30 @@ define_x:
 	mul      t2, t2, t2                    # (X - X_c)*(X - X_c)
 	add      t2, t2, t0                    #(X - X_c)*(X - X_c) + Y*Y
 	sub      t2, t2, t1                    #(X - X_c)*(X - X_c) + Y*Y - DC*DC
-	bge      t2, x0, diferenca_positiva    # Se a diferença for maior ou igual x0
-	blt      t2, x0, diferenca_negativa    # Se a diferença for menor que x0
+	bge      t2, x0, diferenca2_positiva   # Se a diferença for maior ou igual x0
+	j        diferenca2_negativa           # Se a diferença for menor que x0
+
+diferenca2_positiva:
+	mv       t5, t2                        # Muda referencial
+	j        fim_abs2
+
+diferenca2_negativa:
+	sub      t5, x0, t2                    #Subtrai pra deixar positivo
+fim_abs2:
 
 # Compara os dois valores (se s11 < t3, X == s10 e, caso contrário, X == t4. A partir daí, define X == s10).
-	blt      t3, s11, melhor_x
+	blt      t5, t3, melhor_x
 	ret
 
 # Se a diferença for positiva, armazena em t3 ela mesmo!
 diferenca_positiva:
 	mv       t3, t2                        # t3 = Diferença sinal original
+	j        apos_abs1                     # Volta depois dessa chamada
 
 # Se a diferença for negativa, armazena em t3 o valor invertido!
 diferenca_negativa:
 	sub      t3, x0, t2                    # Se for menor, faz a diferença ficar positiva
+	j        apos_abs1                     # Volta depois dessa chamada
 
 # O melhor X é com o valor contrário ao que estava
 melhor_x:
