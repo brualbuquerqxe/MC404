@@ -34,8 +34,6 @@ saida:
 
 	.globl   main
 
-	.globl   int_to_string
-
 	.globl   numero_sinal
 
 	.globl   define_x
@@ -133,34 +131,6 @@ rq_one:
 	li       a0, 1                         # Retorna 1
 	ret
 
-# A função "int_to_string" converte o número inteiro armazenado em a0 para uma string de 4 dígitos, armazenando-a no endereço apontado por a1.
-int_to_string:
-	li       t5, 1000                      # Divisor inicial (1000 para o primeiro dígito)
-	divu     t0, a0, t5                    # Divide o número pelo divisor
-	remu     a0, a0, t5                    # Resto da divisão (atualiza a0 para o próximo dígito)
-	addi     t0, t0, '0'                   # Converte o dígito para caractere ASCII
-	sb       t0, 0(a1)                     # Armazena o caractere na posição correta do buffer
-
-	li       t5, 100                       # Divisor para o segundo dígito
-	divu     t0, a0, t5                    # Divide o número pelo divisor
-	remu     a0, a0, t5                    # Resto da divisão (atualiza a0 para o próximo dígito)
-	addi     t0, t0, '0'                   # Converte o dígito para caractere ASCII
-	sb       t0, 1(a1)                     # Armazena o caractere na posição correta do buffer
-
-	li       t5, 10                        # Divisor para o terceiro dígito
-	divu     t0, a0, t5                    # Divide o número pelo divisor
-	remu     a0, a0, t5                    # Resto da divisão (atualiza a0 para o próximo dígito)
-	addi     t0, t0, '0'                   # Converte o dígito para caractere ASCII
-	sb       t0, 2(a1)                     # Armazena o caractere na posição correta do buffer
-
-	addi     t0, a0, '0'                   # Converte o dígito para caractere ASCII
-	sb       t0, 3(a1)                     # Armazena o caractere na posição correta do buffer
-
-	addi     a1, a1, 4                     # Avança o ponteiro de destino em 4 posições (precisa chegar no próximo bloco de 4 dígitos)
-	ret
-
-
-
 # Verifica se o número é positivo ou negativo
 numero_sinal:
 	add      t0, a1, t4                    # t4 está com o offset do sinal
@@ -229,45 +199,45 @@ melhor_x:
 
 # Guarda o valor de X e Y
 valor_string:
-	add      t0, a2, a3                    # t0 - endereço do bloco = output_address + curr_shift
-	li       t1, 10                        # t1 <- 10
+	add      t0, a2, a3                    # t0 == endereço do número com deslocamento (posição certa)
+	li       t1, 10                        # t1 == 10
 
-	li       t2, ' '                       # t2 <- ' ' (caracter de espaço)
-	sb       t2, 5(t0)                     # output_address[t0 + 5] <- t2
-	mv       t3, a0                        # t3 <- a0
+	li       t2, ' '                       # t2 == ' ' (caracter de espaço)
+	sb       t2, 5(t0)                     # Endereço de saída [t0 + 5] == t2
+	mv       t3, a0
 
-	bge      a0, zero, 1f                  # Se a0 for maior ou igual a 0, pula para a label "1" à frente
-	li       t2, -1                        # t2 <- -1
-	mul      a0, a0, t2                    # Se a0 for negativo, a0 <- a0 * -1 (valor absoluto)
+	bge      a0, zero, positivo            # Se a0 for maior ou igual a 0, pula para a label "positivo" à frente
+	li       t2, -1                        # t2 == -1
+	mul      a0, a0, t2                    # Se a0 for negativo, a0 = a0 * -1 (valor absoluto)
 
-1:
-	rem      t2, a0, t1                    # t2 <- a0 % 10
-	addi     t2, t2, 48                    # t2 <- t2 + 48
-	sb       t2, 4(t0)                     # output_address[t0 + 4] <- t2
-	div      a0, a0, t1                    # a0 <- a0 / 10
+positivo:
+	rem      t2, a0, t1                    # Último dígito decimal
+	addi     t2, t2, 48                    # Transforma em caracter
+	sb       t2, 4(t0)                     # Grava no buffer saída
+	div      a0, a0, t1                    # Remove o dígito que já vimos
 
-	rem      t2, a0, t1                    # t2 <- a0 % 10
-	addi     t2, t2, 48                    # t2 <- t2 + 48
-	sb       t2, 3(t0)                     # output_address[t0 + 3] <- t2
-	div      a0, a0, t1                    # a0 <- a0 / 10
+	rem      t2, a0, t1
+	addi     t2, t2, 48
+	sb       t2, 3(t0)
+	div      a0, a0, t1
 
-	rem      t2, a0, t1                    # t2 <- a0 % 10
-	addi     t2, t2, 48                    # t2 <- t2 + 48
-	sb       t2, 2(t0)                     # output_address[t0 + 2] <- t2
-	div      a0, a0, t1                    # a0 <- a0 / 10
+	rem      t2, a0, t1
+	addi     t2, t2, 48
+	sb       t2, 2(t0)
+	div      a0, a0, t1
 
-	rem      t2, a0, t1                    # t2 <- a0 % 10
-	addi     t2, t2, 48                    # t2 <- t2 + 48
-	sb       t2, 1(t0)                     # output_address[t0 + 1] <- t2
+	rem      t2, a0, t1
+	addi     t2, t2, 48
+	sb       t2, 1(t0)
 
-	blt      t3, zero, valor_negativo      # Se a0 for menor que 0, pula para a label "1" à frente
-	li       t1, '+'                       # t1 <- '+'
-	sb       t1, (t0)                      # output_address[t0] <- '+' (coloca o sinal)
+	blt      t3, zero, valor_negativo      # Se a0 for menor que 0, pula para o label de valor negativo
+	li       t1, '+'                       # t1 == "+"
+	sb       t1, (t0)                      # Coloca o sinal positivo na saída
 	ret
 
 valor_negativo:
-	li       t1, '-'                       # t1 <- '-'
-	sb       t1, (t0)                      # output_address[t0] <- '-' (coloca o sinal)
+	li       t1, '-'                       # t1 == '-'
+	sb       t1, (t0)                      # Coloca o sinal negativo na saída
 	ret
 
 
@@ -381,7 +351,7 @@ main:
 	li       t0, '\n'                      # t0 == 10 ('\n')
 	sb       t0, 11(a2)                    # Insere '\n' no final do buffer de saída
 
-	jal      escrita                       # stdout == saída
+	jal      escrita                       # Escreve saída
 
 # Saída
 	li       a0, 0                         # Código de saída
