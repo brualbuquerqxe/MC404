@@ -62,30 +62,35 @@ leitura_linha2:
 
 # Define o valor do p!
 leitura_ds:
+# prólogo: reserva stack e salva ra
+	addi     sp, sp, -16
+	sw       ra, 12(sp)
 
 # Leitura do primeiro bit (d1)
-	lbu      t3, 0(s2)      # t3 = d1
+	lbu      t3, 0(s0)      # t3 = d1
 	addi     t3, t3, -'0'   #Converte para ASCII
 	andi     t3, t3, 1
 
 # Leitura do segundo bit (d2)
-	lbu      t4, 1(s2)      # t4 = d2
+	lbu      t4, 1(s0)      # t4 = d2
 	addi     t4, t4, -'0'   #Converte para ASCII
 	andi     t4, t4, 1
 
 # Leitura do terceiro bit (d3)
-	lbu      t5, 2(s2)      # t5 = d3
+	lbu      t5, 2(s0)      # t5 = d3
 	addi     t5, t5, -'0'   #Converte para ASCII
 	andi     t5, t5, 1
 
 # Leitura do quarto bit (d4)
-	lbu      t6, 3(s2)      # t6 = d4
+	lbu      t6, 3(s0)      # t6 = d4
 	addi     t6, t6, -'0'   #Converte para ASCII
 	andi     t6, t6, 1
 
 # Chama a função que define os valores dos ps
 	call     definicao_p
-# Retorna
+# epílogo: restaura ra e desfaz stack
+	lw       ra, 12(sp)
+	addi     sp, sp, 16
 	ret
 
 definicao_p:
@@ -108,37 +113,37 @@ definicao_p:
 leitura_codigo:
 
 # Leitura do primeiro bit (d1)
-	lbu      t3, 2(s2)      # t3 = d1
+	lbu      t3, 2(s0)      # t3 = d1
 	addi     t3, t3, -'0'   #Converte para ASCII
 	andi     t3, t3, 1
 
 # Leitura do segundo bit (d2)
-	lbu      t4, 4(s2)      # t4 = d2
+	lbu      t4, 4(s0)      # t4 = d2
 	addi     t4, t4, -'0'   #Converte para ASCII
 	andi     t4, t4, 1
 
 # Leitura do terceiro bit (d3)
-	lbu      t5, 5(s2)      # t5 = d3
+	lbu      t5, 5(s0)      # t5 = d3
 	addi     t5, t5, -'0'   #Converte para ASCII
 	andi     t5, t5, 1
 
 # Leitura do quarto bit (d4)
-	lbu      t6, 6(s2)      # t6 = d4
+	lbu      t6, 6(s0)      # t6 = d4
 	addi     t6, t6, -'0'   #Converte para ASCII
 	andi     t6, t6, 1
 
 # Leitura de p1
-	lbu      s9, 0(s2)      # s9 = p1
+	lbu      s9, 0(s0)      # s9 = p1
 	addi     s9, s9, -'0'   #Converte para ASCII
 	andi     s9, s9, 1
 
 # Leitura de p2
-	lbu      s10, 1(s2)     # s10 = p2
+	lbu      s10, 1(s0)     # s10 = p2
 	addi     s10, s10, -'0' #Desconverte de ASCII
 	andi     s10, s10, 1
 
 # Leitura de p3
-	lbu      s11, 3(s2)     # s11 = p3
+	lbu      s11, 3(s0)     # s11 = p3
 	addi     s11, s11, -'0' #Converte para ASCII
 	andi     s11, s11, 1
 
@@ -207,17 +212,17 @@ escrita_saida2:
 # Escreve se houve erro ou não
 escrita_saida3:
 	la       t1, saida3
-	addi     a1, a1, '0'    # Transforma de ASCII
-	sb       a1, 0(t1)      # Escreve d1
-	li       t0, '\n'
-	sb       t0, 1(t1)      # Newline ao final
 
-	li       a0, 2          # Número de bytes a serem escritos (saída completa)
+	andi     t0, a0, 1      # Garante que será 0 ou 1
+	addi     t0, t0, '0'    # Converte para ASCII
+	sb       t0, 0(t1)
 
-	mv       t0, a0         # Copia o número de bytes lidos para t0
+	li       t2, '\n'
+	sb       t2, 1(t1)
+
 	li       a0, 1          # STDOUT = 1 (saída padrão)
 	la       a1, saida3     # Carrega o endereço do buffer para o registrador a1
-	mv       a2, t0         # Move o valor de número de bytes lidos para o a2
+	li       a2, 2          # Move o valor de número de bytes lidos para o a2
 	li       a7, 64         # Código do serviço de escrita
 	ecall                   # Chamada de sistema
 	ret                     # Retorna da função
@@ -228,7 +233,7 @@ main:
 # ETAPA 01:
 # Leitura da primeira linha
 	call     leitura_linha1
-	la       s2, linha1     # Carrega o endereço de entrada em s2
+	la       s0, linha1     # Carrega o endereço de entrada em s2
 
 # Manipulações
 	call     leitura_ds     # Define o valor de p1
@@ -242,7 +247,7 @@ main:
 # ETAPA 02:
 # Leitura da segunda linha
 	call     leitura_linha2
-	la       s2, linha2     # Carrega o endereço de entrada em s2
+	la       s0, linha2     # Carrega o endereço de entrada em s2
 
 # Manipulações
 	call     leitura_codigo # Carrega o código e pega os valores de d1, d2, d3 e d4
@@ -251,24 +256,28 @@ main:
 # Verifica erros
 
 # Manipulações
-	call     definicao_p    # Define p manualmente
+	call     definicao_p    # Novos ps recalculados
 
-	mv       s6, a1         # s9 == p1
-	mv       s7, a2         # s10 == p2
-	mv       s8, a3         # s11 == p3
+	mv       s6, a1         # s6 == p1
+	mv       s7, a2         # s7 == p2
+	mv       s8, a3         # s8 == p3
 
-	xor      a1, s6, s9     # Compara o p dado do criado
-	xor      a2, s7, s10
-	xor      a3, s8, s11
+# Verifica se são iguais aos originais
+	xor      t0, s6, s9
+	xor      t1, s7, s10
+	xor      t2, s8, s11
 
-# Verifica se teve algum erro (valor = 1)
-	or       a1, a1, a2
-	or       a1, a1, a3
+	or       t0, t0, t1     # Vai "somando as diferencas"
+	or       t0, t0, t2
+	andi     t0, t0, 1      # Garante que é 0 ou 1
 
-# Escrita linha 2
-	call     escrita_saida2 # Escreve a saída da segunda linha
+	mv       s5, t0         # Move pra outro lugar
 
-# Escrita linha 3
+# Segunda saída (valor original)
+	call     escrita_saida2
+
+# Terceira saída (verifica erro)
+	mv       a0, s5         # 0 ou 1
 	call     escrita_saida3
 
 # Saída
