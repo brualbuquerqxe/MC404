@@ -2,13 +2,9 @@
 # Seção com as instâncias não inicializadas
 	.section .bss
 
-# Imagem
-bufferImagem:
-	.skip    262145                     # Maior tamanho possível da imagem (512 X 512)
-
-# Informações básicas da imagem
-bufferCabecalho:
-	.skip    15                         # Serão 15 caracteres
+# Buffer com todas as informações da imagem
+buffer:
+	.skip    262159
 
 # Seção com o código principal e as funções
 	.section .text
@@ -17,228 +13,205 @@ bufferCabecalho:
 
 	.globl   open
 
-	.globl   leituraCabecalho
+	.globl   leituraBuffer
 
-	.globl   leituraImagem
-
-	.globl   extracaoLarguraCabecalho
-
-	.globl   extracaoAlturaCabecalho
-
-	.globl   extracaoMaxCinzaCabecalho
+	.globl   extracaoInformacoes
 
 	.globl   defineCorPixel
 
 	.globl   criacaoImagem
 
-	.globl   close
-
-	.globl   setPixel
+	.globl   pulaEspacos
 
 	.globl   setCanvasSize
 
-	.globl   setScaling
+	.globl   close
 
-
-# Inicia o programa a partir do rótulo "_start".
+# Inicia o programa a partir do rótulo _start.
 _start:
 	call     main
-	li       a0, 0                      # Código de saída
-	li       a7, 93                     # Serviço de saída
+	li       a0, 0                   # Código de saída
+	li       a7, 93                  # Serviço de saída
 	ecall
 
 # Abre o arquivo com a imagem
 open:
-	la       a0, input_file             # address for the file path
-	li       a1, 0                      # flags (0: rdonly, 1: wronly, 2: rdwr)
-	li       a2, 0                      # mode
-	li       a7, 1024                   # syscall open
+	la       a0, input_file          # address for the file path
+	li       a1, 0                   # flags (0: rdonly, 1: wronly, 2: rdwr)
+	li       a2, 0                   # mode
+	li       a7, 1024                # syscall open
 	ecall
 	ret
+
+# Definição do arquivo
 input_file:
 	.asciz   "image.pgm"
 
-# Leitura do cabecalho
-leituraCabecalho:
-	mv       a0, s0                     # Leitura da imagem
-	la       a1, bufferCabecalho        # Onde a entrada será armazenada
-	li       a2, 15                     # Número de bytes que serão lidos
-	li       a7, 63                     # read
-	ecall                               # Chama sistema
-	ret
-
-extracaoLarguraCabecalho:
-# Largura da imagem
-	li       t1, 0                      # Primeiro dígito da largura/ comprimento
-	li       s1, 0                      # Armazena largura
-	li       t2, 100
-	li       t3, 10
-	addi     t4, a1, 3                  # Endereço do buffer
-	li       t5, 3                      # 3 Dígitos
-for1:
-	lbu      t0, 0(t4)                  # Leitura do primeiro caractere da string
-	addi     t4, t4, 1                  # Endereço do caractere atual
-	addi     t0, t0, -'0'               # Converte o caractere ASCII para um inteiro
-	mul      t0, t0, t2                 # Multiplica o valor pelo multiplicador
-	add      s1, t0, s1                 # Armazena a largura
-	div      t2, t2, t3
-	addi     t1, t1, 1                  # i++ (adiciona no contador)
-	bge      t1, t5, cont1              # Continua se o valor do contador for = 3
-	j        for1                       # Continua o loop, caso contrário
-cont1:
-	mv       s2, s1                     # Largura = s2
-	ret
-
-extracaoAlturaCabecalho:
-# Altura da imagem
-	li       t1, 0                      # Primeiro dígito da largura/ comprimento
-	li       s1, 0                      # Armazena largura
-	li       t2, 100
-	li       t3, 10
-	addi     t4, a1, 7                  # Endereço do buffer
-	li       t5, 3                      # 3 Dígitos
-for2:
-	lbu      t0, 0(t4)                  # Leitura do primeiro caractere da string
-	addi     t4, t4, 1                  # Endereço do caractere atual
-	addi     t0, t0, -'0'               # Converte o caractere ASCII para um inteiro
-	mul      t0, t0, t2                 # Multiplica o valor pelo multiplicador
-	add      s1, t0, s1                 # Armazena a largura
-	div      t2, t2, t3
-	addi     t1, t1, 1                  # i++ (adiciona no contador)
-	bge      t1, t5, cont2              # Continua se o valor do contador for = 3
-	j        for2                       # Continua o loop, caso contrário
-cont2:
-	mv       s3, s1                     # Altura = s3
-	ret
-
-extracaoMaxCinzaCabecalho:
-# Máximo do cinza da imagem
-	li       t1, 0                      # Primeiro dígito da largura/ comprimento
-	li       s1, 0                      # Armazena largura
-	li       t2, 100
-	li       t3, 10
-	addi     t4, a1, 11                 # Endereço do buffer
-	li       t5, 3                      # 3 Dígitos
-for3:
-	lbu      t0, 0(t4)                  # Leitura do primeiro caractere da string
-	addi     t4, t4, 1                  # Endereço do caractere atual
-	addi     t0, t0, -'0'               # Converte o caractere ASCII para um inteiro
-	mul      t0, t0, t2                 # Multiplica o valor pelo multiplicador
-	add      s1, t0, s1                 # Armazena a largura
-	div      t2, t2, t3
-	addi     t1, t1, 1                  # i++ (adiciona no contador)
-	bge      t1, t5, cont3              # Continua se o valor do contador for = 3
-	j        for3                       # Continua o loop, caso contrário
-cont3:
-	mv       s4, s1                     # MaxVal = s4
-	ret
-
-
 # Definição da cor
 defineCorPixel:
-# Para definirmos a cor de um Pixel, precisamos concatear os valores de R G B e A, sendo que R = G = B e A = 255.
-# Assim, teremos 32 bits!
-# Vamos usar que s5 é a informação armazenada no meu bit.
-
-	slli     s6, s5, 24                 # Left Shift do R
-	slli     s7, s5, 16                 # Left Shift do G
-	add      s6, s6, s7                 # Soma R com G
-	slli     s7, s5, 8                  # Left Shift do B
-	add      s6, s6, s7                 # Soma R + G + B
-	addi     s6, s6, 255                # Finaliza somando A (Cor do Pixel = s6)
+# s5: nível de cinza (0..255)
+	slli     t0, s5, 24              # R << 24
+	slli     t4, s5, 16              # G << 16
+	or       t0, t0, t4              # R|G
+	slli     t4, s5, 8               # B << 8
+	or       t0, t0, t4              # R|G|B
+	ori      s6, t0, 255             # A = 255 no byte menos significativo
 	ret
 
 # Possibilita a visualização da imagem
 criacaoImagem:
-	li       t1, 0                      # Começo com a coordenada X = 0
+	addi     sp, sp, -16
+	sw       ra, 12(sp)
+	sw       s7, 8(sp)
 
-	li       t2, 0                      # Começo com a coordenada Y = 0
+	mv       s7, a2
+	li       t2, 0                   # Valor inicial do Y
+# Faço um Loop de Y por fora (ou seja, mudança de linha)
+.loopY:
+	bge      t2, a6, .fim            # Se o valor da altura for igual altura = 0 (fim)
 
-	li       t3, 0                      # Começo com o contador da posição no buffer!
+	li       t1, 0                   # Valor inicial do X
+# Faço um Loop de X (ou seja, muda coluna)
+.loopX:
+# Se for igual a largura, singifica que tem que ir pra próxima linha
+	bge      t1, a5, .proximaLinha
 
-	mul      t4, s2, s3                 # O máximo de bytes da imagem (não é o máximo possível, se não vou ler lixo)!
+	add      t0, s7, t1
+	add      t0, t0, t2
+	mul      t4, t2, a5
+	add      t0, s7, t4
+	add      t0, t0, t1
+	lbu      s5, 0(t0)
 
-# Função que passa por todos os bytes que formam a imagem
-passagemPelaImagem:
-
-	beqz     t3, pula                   # Pula se t3 = 0, já que, mesmo o resto sendo zero, continua na mesma linha!
-
-	addi     t5, t3, 1
-	
-	rem      t6, t5, s2                 # Calcula o resto da posição pelo comprimento da linha!
-
-	beqz     t6, novaLinha              # Se o resto for igual a zero, significa que estamos em uma nova linha!
-
-	call     mesmaLinha                 # Se o resto for diferente de zero, seguimos na mesma linha
-
-pula:
-
-	addi      t0, t3, 0                 # Endereço = buffer + índice = t0
-	lbu      s5, 0(t0)                  # s5 = Valor do cinza
-
+# Defina a cor do Pixel
 	call     defineCorPixel
 
-	call     setPixel                   # Define a cor de cada Pixel
+# Função de SetPixel (apaguei e estou usando direto)
+	mv       a0, t1
+	mv       a1, t2
+	mv       a2, s6
+	li       a7, 2200
+	ecall
 
-	addi     t3, t3, 1                  # Desloco uma pro lado no buffer (próximo Pixel)
+# Aumenta uma unidade (segue pra próxima coluna)
+	addi     t1, t1, 1
+	j        .loopX
 
-	blt      t3, t4, passagemPelaImagem # Se ainda não li todos os bytes, volto para a função.
+.proximaLinha:
+	addi     t2, t2, 1               # Aumenta o valor de Y
+	j        .loopY
+
+# Termina!
+.fim:
+	lw       s7, 8(sp)
+	lw       ra, 12(sp)
+	addi     sp, sp, 16
 	ret
 
-# Passa para uma nova linha!
-novaLinha:
-
-	li       t1, 0                      # Voltamos para a primeira coluna (X = 0)
-
-	addi     t2, t2, 1                  # Descemos mais uma linha (Y = Y + 1)
-	j        pula                       # Pula o mesma Linha
-
-# Continuo na mesma linha
-mesmaLinha:
-
-	addi     t1, t1, 1                  # Avançamos na largura da linha (X = X + 1)
-	ret
-
-# Leitura da imagem
-leituraImagem:
-	mv       a0, s0                     # Leitura da imagem
-	la       a1, bufferImagem           # Onde a entrada será armazenada
-	mv       a2, s5                     # Quantiade de bytes
-	li       a7, 63                     # read
-	ecall                               # Chama sistema
+# Leitura do buffer com o cabeçalho e a imagem
+leituraBuffer:
+	mv       a0, s0                  # Leitura da imagem
+	la       a1, buffer              # Onde a entrada será armazenada
+	li       a2, 262159              # Número de bytes que serão lidos
+	li       a7, 63                  # read
+	ecall                            # Chama sistema
 	ret
 
 # Fecha o arquivo da imagem
 close:
-	mv       a0, s0                     # Identificador da imagem
-	li       a7, 57                     # syscall close
-	ecall
-	ret
-
-
-# Define a cor de cada Pixel!
-setPixel:
-	mv       a0, t1                     # Largura (eixo X)
-	mv       a1, t2                     # Altura (eixo Y)
-	mv       a2, s6                     # Cor do Pixel = s6
-	li       a7, 2200                   # syscall setPixel (2200)
+	mv       a0, s0                  # Identificador da imagem
+	li       a7, 57                  # syscall close
 	ecall
 	ret
 
 # Redefine o tamanho da tela
 setCanvasSize:
-	mv       a0, s2                     # Largura da tela
-	mv       a1, s3                     # Altura da tela
-	li       a7, 2201                   # syscall setCanvasSize (2201)
+	mv       a0, a5                  # Largura da tela
+	mv       a1, a6                  # Altura da tela
+	li       a7, 2201                # syscall setCanvasSize (2201)
 	ecall
 	ret
 
-# Inspeção da imagem
-setScaling:
-	li       a0, 512
-	li       a1, 512
-	li       a7, 2202
-	ecall
+# Pula o que não é número
+pulaEspacos:
+	li       t2, 32                  # ' '
+	li       t3, 9                   # '\t'
+	li       t4, 10                  # '\n'
+	li       t5, 13                  # '\r'
+.pesq:
+	add      a2, a1, t1
+	lbu      t6, 0(a2)
+	beq      t6, t2, .avanca
+	beq      t6, t3, .avanca
+	beq      t6, t4, .avanca
+	beq      t6, t5, .avanca
+	ret
+.avanca:
+	addi     t1, t1, 1
+	j        .pesq
+
+# Extrai as informações do cabeçalho da imagem
+extracaoInformacoes:
+	li       t2, 32                  # ' '
+	li       t3, 9                   # '\t'
+	li       t4, 10                  # '\n'
+	li       t5, 13                  # '\r'
+
+# PRIMEIRO CARACTERE (d1)
+	add      a2, a1, t1
+	lbu      s1, 0(a2)
+	addi     t1, t1, 1               # Segue
+
+# SEGUNDO CARACTERE (d2 ou whitespace)
+	add      a2, a1, t1
+	lbu      s2, 0(a2)
+	addi     t1, t1, 1
+	beq      s2, t2, fimInformacao1D
+	beq      s2, t3, fimInformacao1D
+	beq      s2, t4, fimInformacao1D
+	beq      s2, t5, fimInformacao1D
+
+# TERCEIRO CARACTERE (d3 ou whitespace)
+	add      a2, a1, t1
+	lbu      s3, 0(a2)
+	addi     t1, t1, 1
+	beq      s3, t2, fimInformacao2D
+	beq      s3, t3, fimInformacao2D
+	beq      s3, t4, fimInformacao2D
+	beq      s3, t5, fimInformacao2D
+
+# QUARTO CARACTERE (consome o whitespace após o 3º dígito)
+	addi     t1, t1, 1
+	call     fimInformacao3D
+
+# Não é número
+fimInformacao:
+	ret
+
+# 1 dígito
+fimInformacao1D:
+	addi     s1, s1, -'0'
+	ret
+
+# 2 dígitos
+fimInformacao2D:
+	li       t6, 10
+	addi     s1, s1, -'0'
+	addi     s2, s2, -'0'
+	mul      s1, s1, t6
+	add      s1, s1, s2
+	ret
+
+# 3 dígitos
+fimInformacao3D:
+	li       t6, 10
+	addi     s1, s1, -'0'
+	addi     s2, s2, -'0'
+	addi     s3, s3, -'0'
+	mul      s1, s1, t6              # (d1*10)
+	add      s1, s1, s2              # (d1*10 + d2)
+	mul      s1, s1, t6              # ((d1*10 + d2)*10)
+	add      s1, s1, s3              # + d3
 	ret
 
 # Função principal
@@ -246,26 +219,29 @@ main:
 
 # Abertura do arquivo da imagem
 	call     open
-	mv       s0, a0                     # Movimenta o endereço de abertura para não perder
+	mv       s0, a0                  # Movimenta o endereço de abertura para não perder
 
 # Leitura do cabecalho
-	call     leituraCabecalho
-	la       a1, bufferCabecalho        # Carrega o endereço de entrada em a1
-	call     extracaoLarguraCabecalho   # Largura = s2
-	call     extracaoAlturaCabecalho    # Altura = s3
-	call     extracaoMaxCinzaCabecalho  # Max = s4
+	call     leituraBuffer
+	la       a1, buffer              # Carrega o endereço de entrada em a1
+	li       t1, 3                   # Percorre todo o buffer (pula o P5)
+	call     pulaEspacos
+	call     extracaoInformacoes     # Extrai a Largura
+	mv       a5, s1                  # Largura = a5
+	call     pulaEspacos
+	call     extracaoInformacoes     # Extrai a Altura
+	mv       a6, s1                  # Altura = a6
+	call     pulaEspacos
+	addi     t1, t1, 4
+
+# Define o endereço da imagem
+	add      a2, a1, t1
 
 # Define o Canvas
 	call     setCanvasSize
 
-# Define escala
-	call     setScaling
-
 # Leitura da imagem
-	mul      s5, s2, s3                 # Quantidade de Pixels (preciso fazer isso para não ficar esperando entrada)
-	addi     s5, s5, 1                  # Já que temos o último espaço em branco
-	call     leituraImagem
-	la       a1, bufferImagem           # Carrega o buffer da imagem em a1
+	mul      a3, a5, a6              # Quantidade de Pixels
 
 # Criação da imagem!
 	call     criacaoImagem
@@ -274,6 +250,6 @@ main:
 	call     close
 
 # Saída
-	li       a0, 0                      # Código de saída
-	li       a7, 93                     # Serviço de saída
+	li       a0, 0                   # Código de saída
+	li       a7, 93                  # Serviço de saída
 	ecall
