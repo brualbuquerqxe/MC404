@@ -4,7 +4,7 @@
 
 # Imagem
 bufferImagem:
-	.skip    262144                     # Maior tamanho possível da imagem (512 X 512)
+	.skip    262145                     # Maior tamanho possível da imagem (512 X 512)
 
 # Informações básicas da imagem
 bufferCabecalho:
@@ -156,16 +156,16 @@ criacaoImagem:
 
 	li       t3, 0                      # Começo com o contador da posição no buffer!
 
-	li      t4, s2, s3                 # O máximo de bytes da imagem (não é o máximo possível, se não vou ler lixo)!
-
-	mv       t5, s2                     # O tamanho da linha
+	mul      t4, s2, s3                 # O máximo de bytes da imagem (não é o máximo possível, se não vou ler lixo)!
 
 # Função que passa por todos os bytes que formam a imagem
 passagemPelaImagem:
 
 	beqz     t3, pula                   # Pula se t3 = 0, já que, mesmo o resto sendo zero, continua na mesma linha!
 
-	rem      t6, t3, t5                 # Calcula o resto da posição pelo comprimento da linha!
+	addi     t5, t3, 1
+	
+	rem      t6, t5, s2                 # Calcula o resto da posição pelo comprimento da linha!
 
 	beqz     t6, novaLinha              # Se o resto for igual a zero, significa que estamos em uma nova linha!
 
@@ -173,7 +173,7 @@ passagemPelaImagem:
 
 pula:
 
-	add      t0, a1, t3                 # Endereço = buffer + índice = t0
+	addi      t0, t3, 0                 # Endereço = buffer + índice = t0
 	lbu      s5, 0(t0)                  # s5 = Valor do cinza
 
 	call     defineCorPixel
@@ -235,8 +235,8 @@ setCanvasSize:
 
 # Inspeção da imagem
 setScaling:
-	li       a0, 1
-	li       a1, 1
+	li       a0, 512
+	li       a1, 512
 	li       a7, 2202
 	ecall
 	ret
@@ -259,7 +259,7 @@ main:
 	call     setCanvasSize
 
 # Define escala
-	call setScaling
+	call     setScaling
 
 # Leitura da imagem
 	mul      s5, s2, s3                 # Quantidade de Pixels (preciso fazer isso para não ficar esperando entrada)
