@@ -70,7 +70,7 @@ continua:
 	add      s9, s9, s7               # Soma o valor
 	addi     s6, s6, 1                # Aumenta o contador
 	addi     s11, s11, 1              # Passa para a próxima posição
-	j     for
+	j        for
 
 .fimNumero:
 	mul      s9, s9, s8               # Multiplica por -1 se o número for negativo
@@ -80,7 +80,7 @@ continua:
 	li       s8, -1                   # Multiplica por -1
 	addi     s6, s6, 1                # Aumenta o contador
 	addi     s11, s11, 1              # Passa para a próxima posição
-	call     for
+	j        for
 
 # Função que percorre a lista ligada até encontrar o nó correto
 exploraLista:
@@ -91,21 +91,18 @@ exploraLista:
 
 	beq      t3, a2, .somaEncontrada  # Se a soma foi encontrada, para de percorrer a lista
 
-	addi     s1, s1, 8                # Move para o próximo nó
-	lw       t4, 0(s2)
+	lw       t4, 8(s1)
 	beqz     t4, .fimLista            # Se o próximo nó for zero, chegou no fim da lista
 
 	addi     a4, a4, 1                # Caso contrário, vai para o nó seguinte
-	la       s1, t4                   # Vai para o endereço do próximo nó
-	call     exploraLista
+	mv       s1, t4                   # Vai para o endereço do próximo nó
+	j        exploraLista
 
 .somaEncontrada:
-	ecall
 	ret                               # Encerra a procura
 
 .fimLista:
 	li       a4, -1                   # A lista não possui nós que atender a soma
-	ecall
 	ret
 
 # Função que converte de número para string
@@ -125,6 +122,8 @@ converteSaida:
 	li       s1, 1000
 	beq      a4, s1, .numero4D        # Se o nó é o 1000
 
+escreve:
+# Escrita da saída
 	li       a0, 5                    # Número de bytes
 	mv       t0, a0                   # Copia o número de bytes lidos para t0
 	li       a0, 1                    # Saída (STDOUT)
@@ -144,8 +143,7 @@ converteSaida:
 	sb       s2, 1(s4)
 	sb       s3, 2(s4)
 
-	ecall
-	ret
+	j        escreve
 
 .numero1D:
 	addi     s1, a4, '0'
@@ -155,8 +153,7 @@ converteSaida:
 	sb       s1, 0(s4)
 	sb       s2, 1(s4)
 
-	ecall
-	ret
+	j        escreve
 
 .numero2D:
 	li       s5, 10
@@ -171,7 +168,9 @@ converteSaida:
 	la       s4, bufferSaida          # Carrega o endereço da saída
 	sb       s1, 0(s4)
 	sb       s2, 1(s4)
-	sb       s3, 1(s4)
+	sb       s3, 2(s4)
+
+	j        escreve
 
 .numero3D:
 	li       s5, 100
@@ -192,11 +191,10 @@ converteSaida:
 	la       s4, bufferSaida          # Carrega o endereço da saída
 	sb       s1, 0(s4)
 	sb       s3, 1(s4)
-	sb       s2, 1(s4)
-	sb       s5, 1(s4)
+	sb       s2, 2(s4)
+	sb       s5, 3(s4)
 
-	ecall
-	ret
+	j        escreve
 
 .numero4D:
 	li       s1, '1'
@@ -210,8 +208,7 @@ converteSaida:
 	sb       s2, 3(s4)
 	sb       s3, 4(s4)
 
-	ecall
-	ret
+	j        escreve
 
 
 
@@ -234,3 +231,7 @@ main:
 
 	call     converteSaida            # Converte o número inteiro para texto
 
+# Saída
+	li       a0, 0
+	li       a7, 93
+	ecall
