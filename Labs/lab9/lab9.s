@@ -61,9 +61,8 @@ for:
 	beq      s7, s2, .fimNumero
 	beq      s7, s3, .fimNumero
 	beq      s7, s4, .fimNumero
-	beq      s7, s5, .fimNumero
 # Se o caracter for "-", o número será negativo
-	beq      s7, s6, .numeroNegativo
+	beq      s7, s5, .numeroNegativo
 
 continua:
 	mul      s9, s9, s10              # Muda a casa da soma
@@ -71,11 +70,10 @@ continua:
 	add      s9, s9, s7               # Soma o valor
 	addi     s6, s6, 1                # Aumenta o contador
 	addi     s11, s11, 1              # Passa para a próxima posição
-	call     for
+	j     for
 
 .fimNumero:
 	mul      s9, s9, s8               # Multiplica por -1 se o número for negativo
-	ecall
 	ret
 
 .numeroNegativo:
