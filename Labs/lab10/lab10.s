@@ -15,9 +15,11 @@ bufferLinha:
 
 	.globl   _start
 
-	.globl   leituraEntrada
+	.globl   puts
 
-	.globl   escreveSaida
+	.globl   gets
+
+	.globl   atoi
 
 # Inicia o programa a partir do rótulo "_start".
 _start:
@@ -25,26 +27,6 @@ _start:
 	li       a0, 0                  # Código de saída
 	li       a7, 93                 # Serviço de saída
 	ecall
-
-# Leitura do número da entrada.
-leituraEntrada:
-	li       a0, 0                  # Entrada STDIN
-	la       a1, bufferEntrada      # Local que armazena a entrada
-	li       a2, 7                  # Número de bytes que serão lidos
-	li       a7, 63                 # Chamada de leitura
-	ecall                           # Chama sistema
-	ret                             # Retorna
-
-# Escrita da saída
-escreveSaida:
-	li       a0, 5                  # Número de bytes
-	mv       t0, a0                 # Copia o número de bytes lidos para t0
-	li       a0, 1                  # Saída (STDOUT)
-	la       a1, bufferSaida        # Carrega o endereço do buffer
-	mv       a2, t0
-	li       a7, 64                 # Código do serviço de escrita
-	ecall
-	ret
 
 # Função que escreve a saída e adicona um caracter a mais de "\n"
 puts:
@@ -95,3 +77,45 @@ gets:
 	mv       a0, t3                 # Move de volta o endereço
 	ret
 
+# Converte string para inteiro
+atoi:
+
+# a0 = endereço string
+
+	li       t0, 48                 # Caracter com valor 0
+	li       t1, 57                 # Caracter com valor 9
+	li       t2, 45                 # Caracter '-'
+	li       t3, 1                  # Valor positivo
+	li       t4, 0                  # Verifica se leu um número
+	li       t5, 0                  # Contador
+	li       a1, 0                  # Lugar da soma
+
+.for:
+	lbu      t6, 0(a0)              # Caracter em análise
+	beq      t2, t6, .numeroSinal   # Número com sinal
+	bltu      t6, t0, .naoNumero
+	bltu      t1, t6, .naoNumero
+	j        .converteNumero        # Converte em inteiro
+.continua:
+	addi     t5, t5, 1              # Próximo caracter
+	addi     a0, a0, 1              # Avança
+	j        .for                   # Retorna no loop
+.converteNumero:
+	li       t4, 10
+	addi     t6, t6, -'0'           # Converte em número inteiro
+	mul      a1, a1, t4             # Multiplica por 10
+	add      a1, a1, t6             # Adiciona na soma
+	li       t4, 1                  # Mostra que já leu algum número
+	j        .continua
+
+.numeroSinal:
+	bnez     t4, .fim               # Está no meio do número
+	li       t3, -1                 # Número negativo
+	j        .continua
+.naoNumero:
+	bne      t4, zero, .fim         # Já leu o número inteiro
+	j        .continua              # Se não leu um número, volta pra ler
+.fim:
+	mul      a1, a1, t3             # Caso o número seja negativo
+	sub      a0, a0, t5             # Volta para o início do buffer
+	ret
