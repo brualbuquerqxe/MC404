@@ -85,7 +85,7 @@ continua:
 # Função que percorre a lista ligada até encontrar o nó correto
 exploraLista:
 	lw       t1, 0(s1)                # Posição do primeiro número inteiro
-	lw       t2, 4(s1)                # Como word ocupa 4 posições, pula 4 e encontra o outro número≥
+	lw       t2, 4(s1)                # Como word ocupa 4 posições, pula 4 e encontra o outro número
 
 	add      t3, t2, t1               # Soma dos números
 
