@@ -41,13 +41,14 @@ puts:
 .escreve:
 	li       a0, 1                    # Saída STDOUT
 	mv       a1, t0                   # Endereço do buffer
-	mv       a2, t2                   # Número de bytes
+	addi       a2, t2, 1                   # Número de bytes
 	li       a7, 64                   # Chamada de escrita
 	ecall                             # Chama sistema
 	ret
 
 # Armazena a entrada até a aparição de um caracter de nova linha
 gets:
+
 	mv       a1, a0                   # Local que armazena a entrada
 	li       a0, 0                    # Entrada STDIN
 	li       a2, 100                  # Número de bytes que serão lidos
