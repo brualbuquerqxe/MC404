@@ -41,33 +41,36 @@ puts:
 .escreve:
 	li       a0, 1                    # Saída STDOUT
 	mv       a1, t0                   # Endereço do buffer
-	addi       a2, t2, 1                   # Número de bytes
+	addi     a2, t2, 1                # Número de bytes
 	li       a7, 64                   # Chamada de escrita
 	ecall                             # Chama sistema
 	ret
 
 # Armazena a entrada até a aparição de um caracter de nova linha
 gets:
+	mv       t0, a0                   # Ponteiro para o início do buffer
+	li       t1, 0                    # Contador
+	li       t2, '\n'                 # Caracter de nova linha
 
-	mv       a1, a0                   # Local que armazena a entrada
+.leituraCaracter:
 	li       a0, 0                    # Entrada STDIN
-	li       a2, 100                  # Número de bytes que serão lidos
+	add      a1, t0, t1               # Ponteiro para o início do buffer
+	li       a2, 1                    # Número de bytes que serão lidos
 	li       a7, 63                   # Chamada de leitura
 	ecall                             # Chama sistema
 
-	mv       a0, a1                   # Ponteiro para o início do buffer
-	li       t2, '\n'                 # Caracter de nova linha
+.continuaLeitura:
+	beqz     a0, .fim2                # Chegou em '/0'
 
-.semPulaLinha:
-	lb       t3, 0(a0)                # Carrega o caracter
+	lb       t3, 0(a1)                # Carrega o caracter
 	beq      t3, t2, .fim2            # Encontrou o caracter de nova linha
-	beqz     t3, .fim2                # Encontrou o caracter de fim
-	addi     a0, a0, 1                # Próximo caracter
-	j        .semPulaLinha
+	addi     t1, t1, 1                # Próximo caracter
+
+	j        .leituraCaracter
 
 .fim2:
-	sb       zero, 0(a0)              # Adiciona o "\0"
-	mv       a0, a1                   # Retorna o ponteiro inicial
+	sb       zero, 0(a1)              # Adiciona o "\0"
+	mv       a0, t0                   # Retorna o ponteiro inicial
 	ret
 
 # Converte string para inteiro
@@ -83,7 +86,7 @@ atoi:
 
 	beqz     t5, .fim3
 
-	beq      t5, t2, .negativo1        # Se for negativo
+	beq      t5, t2, .negativo1       # Se for negativo
 	beq      t5, t3, .segue           # Se for positivo
 
 	li       t6, '0'
@@ -125,17 +128,17 @@ itoa:
 	mv       t6, a1                   # Guarda ponteiro inicial
 	mv       t2, a2                   # Base do número
 
-	li       t3, 10
-	bne      t2, t3, .converte        # se base for 16, pula o tratamento de sinal
-
 	li       t3, 0                    # Se for negativo, t3 = 1
+
+	li       t5, 10
+	bne      t2, t5, .converte        # se base for 16, pula o tratamento de sinal
 
 	blt      t0, zero, .negativo2
 	j        .converte
 
 .negativo2:
-	li       t3, -1                   # Indica que é negativo
-	mul      t0, t0, t3               # Inverte o valor
+	li       t5, -1                   # Indica que é negativo
+	mul      t0, t0, t5               # Inverte o valor
 	li       t3, 1                    # Indica ser negativo
 
 .converte:
