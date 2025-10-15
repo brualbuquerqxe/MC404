@@ -15,15 +15,22 @@ bufferLinha:
 
 	.globl    _start
 
+	.globl    main
+
 	.globl    puts
 
 	.globl    gets
 
 	.globl    atoi
 
+	.globl    itoa
+
 	.globl    linked_list_search
 
 	.globl    exit
+
+	.extern   head_node
+
 
 # Inicia o programa a partir do rótulo "_start".
 _start:
@@ -131,8 +138,25 @@ linked_list_search:
 	li        a0, -1                   # Valor não encontrado
 	ret
 
-
+# Finaliza o programa
 exit:
 	li        a0, 0                    # Código de saída
 	li        a7, 93                   # Serviço de saída
 	ecall
+
+# Função principal do programa
+main:
+	la        a0, bufferEntrada        # Endereço do buffer de entrada
+	call      gets                     # Lê a entrada
+	la        a0, bufferEntrada        # Endereço do buffer de entrada
+	call      atoi                     # Converte para inteiro
+	mv        a1, a0                   # Armazena o valor que deve ser encontrado
+	la        a0, head_node          # Endereço do head_node
+	call      linked_list_search       # Procura o valor na lista ligada
+
+	call itoa 				   # Converte o valor para string
+
+	call 	puts                    # Escreve o valor na saída
+
+	exit							 # Finaliza o programa
+	
