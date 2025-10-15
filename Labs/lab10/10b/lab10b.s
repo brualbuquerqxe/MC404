@@ -190,29 +190,39 @@ itoa:
 recursive_tree_search:
 	beqz     a0, .fimLista            # Se a lista for nula, fim da lista!
 
-	li       t5, 0                    # Contador de nós
+	li       t4, 0                    # Contador do nível do nó
 
 .loopLista:
-	lw       t1, 0(a0)                # Primeiro valor da soma
-	lw       t2, 4(a0)                # Segundo valor da soma
+	lw       t1, 0(a0)                # Valor armazenado
+	beq      t1, a1, .valorEncontrado # Se for igual, achou o valor
 
-	add      t3, t1, t2               # Soma os dois valores
+	lw       t2, 4(a0)                # Nó da esquerda
+	beqz     t2, .sobeLista           # Se for nulo, não tem como descer mais!
+	j        desceDireita             # Não é nulo: pode descer mais um nível
 
-	beq      t3, a1, .valorEncontrado
+	lw       t3, 8(a0)                # Nó da direita
+	beqz     t3, .sobeLista           # Se for nulo, não tem como descer mais!
+	j        desceEsquerda            # Não é nulo: pode descer mais um nível
 
-	lw       t4, 8(a0)                # Próximo nó
-	beqz     t4, .fimLista            # Se for nulo, fim da lista
+.fimLista:
+	li       a0, 0                    # Valor não encontrado
+	ret
 
-	addi     t5, t5, 1                # Aumenta o contador
-	mv       a0, t4                   # Próximo nó
+.sobeLista:
+# Implementar com ponteiro
+
+.desceDireita:
+	addi     t4, t4, 1                # Aumenta o contador
+	mv       a0, t2                   # Desce para o nó da direita
+	j        .loopLista
+
+.desceEsquerda:
+	addi     t4, t4, 1                # Aumenta o contador
+	mv       a0, t3                   # Desce para o nó da direita
 	j        .loopLista
 
 .valorEncontrado:
-	mv       a0, t5                   # Retorna o contador de nós
-	ret
-
-.fimLista:
-	li       a0, -1                   # Valor não encontrado
+	mv       a0, t4                   # Retorna o nível do nó
 	ret
 
 # Finaliza o programa
