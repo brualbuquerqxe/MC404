@@ -2,13 +2,10 @@
 	.section  .bss
 
 bufferEntrada:
-	.skip     7                        # Pode ter sinal ou não
+	.skip     100                      # Pode ter sinal ou não
 
 bufferSaida:
-	.skip     5                        # O máximo de nós é 1000
-
-bufferLinha:
-	.skip     2                        # Adiciona comando que pula linha
+	.skip     100                      # O máximo de nós é 1000
 
 # Seção que está com o código e as funções.
 	.section  .text
@@ -42,23 +39,23 @@ _start:
 # Função que escreve a saída e adicona um caracter a mais de "\n"
 puts:
 	li        t2, 0                    # Contador
-
+	mv        t0, a0                   # Salva o endereço inicial
 .checa_fim:
-# Endereço = a0
-	lw        t1, 0 (a0)               # Carrega o caracter
+# Endereço = t0
+	lb        t1, 0 (t0)               # Carrega o caracter
 	beq       t1, zero, .fim1          # Encontrou "\0"
 	addi      t2, t2, 1                # Aumenta o contador
-	addi      a0, a0, 1                # Próximo caracter
+	addi      t0, t0, 1                # Próximo caracter
 	j         .checa_fim
 .fim1:
 	addi      t2, t2, 1                # Contador considera o "\n"
 	li        t3, '\n'                 # Caracter que pula linha
-	sw        t3, 0(a0)                # Troca o "\0" por "\n"
-	sw        zero, 1(a0)              # Adiciona o "\0" no final
-	sub       a0, a0, t2               # Volta o ponteiro para o início
+	sb        t3, 0(t0)                # Troca o "\0" por "\n"
+	sb        zero, 1(t0)              # Adiciona o "\0" no final
+	sub       t0, t0, t2               # Volta o ponteiro para o início
 .escreve:
 	li        a0, 1                    # Saída STDOUT
-	la        a1, bufferSaida          # Endereço do buffer
+	mv        a1, t0                   # Endereço do buffer
 	mv        a2, t2                   # Número de bytes
 	li        a7, 64                   # Chamada de escrita
 	ecall                              # Chama sistema
@@ -113,6 +110,68 @@ atoi:
 	li        t4, -1                   # Muda para negativo
 	j         .segue
 
+# Converte inteiro para string
+itoa:
+	mv        t0, a0                   # Valor do nó
+
+	mv        t1, a1                   # Onde escrever
+
+	mv        t6, a1                   # Guarda ponteiro inicial
+	mv        t2, a2                   # Base do número
+
+	li        t3, 0                    # Se for negativo, t3 = 1
+
+	blt       t0, zero, .negativo
+	j         .converte
+
+.negativo:
+	li        t3, -1                   # Indica que é negativo
+	mul       t0, t0, -1               # Inverte o valor
+	li        t3, 1                    # Indica ser negativo
+
+.converte:
+.loop:
+	rem       t4, t0, t2               # t4 = Resto
+	div       t0, t0, t2               # t0 = Divisão
+
+# converte resto para caractere ASCII
+	li        t5, 10
+	blt       t4, t5, .digito          # É um dígito!
+	addi      t4, t4, -10
+	addi      t4, t4, 'A'              # letras maiúsculas A–F
+	j         .grava
+.digito:
+	addi      t4, t4, '0'              # Converte para ASCII
+.grava:
+	sb        t4, 0(t1)                # Escreve caractere
+	addi      t1, t1, 1                # Avança o ponteiro
+	bnez      t0, .loop                # Repete até valor zerar
+
+	beqz      t3, .naoNegativo         # Se não for negativo, pula
+
+	li        t4, '-'                  # Adiciona o sinal de negativo
+	sb        t4, 0(t1)
+	addi      t1, t1, 1
+.naoNegativo:
+	sb        zero, 0(t1)              # Adiciona "\0" no final
+
+.inverteNumero:
+	addi      t1, t1, -1               # Ponteiro para último caractere válido
+	mv        t2, t6                   # t2 = início
+.reverte:
+	bge       t2, t1, .fim
+	lb        t4, 0(t2)                # Troca caracteres
+	lb        t5, 0(t1)
+	sb        t5, 0(t2)
+	sb        t4, 0(t1)
+	addi      t2, t2, 1
+	addi      t1, t1, -1
+	j         .reverte
+
+.fim:
+	mv        a0, t6                   # Retorno: ponteiro original da string
+	ret
+
 # Procura na lista ligada o valor dado
 linked_list_search:
 	li        t5, 0                    # Contador de nós
@@ -151,12 +210,14 @@ main:
 	la        a0, bufferEntrada        # Endereço do buffer de entrada
 	call      atoi                     # Converte para inteiro
 	mv        a1, a0                   # Armazena o valor que deve ser encontrado
-	la        a0, head_node          # Endereço do head_node
+	la        a0, head_node            # Endereço do head_node
 	call      linked_list_search       # Procura o valor na lista ligada
 
-	call itoa 				   # Converte o valor para string
+	la        a1, bufferSaida
+	li        a2, 10
 
-	call 	puts                    # Escreve o valor na saída
+	call      itoa                     # Converte o valor para string
 
-	exit							 # Finaliza o programa
-	
+	call      puts                     # Escreve o valor na saída
+
+	call      exit                     # Finaliza o programa
