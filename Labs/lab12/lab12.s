@@ -24,17 +24,40 @@
 # Função que verifica se a distância é menor que 15
 	.globl   verificaDistancia
 
+# Função que configura o carro para andar para frente
+	.globl   preparaVeiculo
+
+# Prepara o carro para se deslocar
+preparaVeiculo:
+
+	li       a0, acionaGPS              # Extrai o endereço para acionar o GPS ( = 1)
+	li       a1, 1                      # Ativa a configuração
+	sb       a1, 0(a0)                  # GPS ativado
+
+	li       a0, direcaoMotor           # Extrai o endereço para acionar o motor ( = 1)
+	sb       a1, 0(a0)                  # Para frente, sempre!
+
+	li       a0, freioMao               # Extrai o endereço para desativar o freio de mão ( = 0)
+	li       a1, 0                      # Desativa a configuração
+	sb       a1, 0(a0)                  # Freio de mão desativado
+
+	ret                                 # Carro já configurado para andar
 
 verificaDistancia:
-# t1 = eixo X
-# t2 = eixo Y
-# t3 = eixo Z
+	li       a0, eixoX
+	lw       t1, 0(a0)                  # Carrega a coordenada no eixo X
 
-# t4 = eixo X final
-# t5 = eixo Y final
-# t6 = eixo Z final
+	li       a0, eixoY
+	lw       t2, 0(a0)                  # Carrega a coordenada no eixo Y
 
-# s1 = distância máxima = 225
+	li       a0, eixoZ
+	lw       t3, 0(a0)                  # Carrega a coordenada no eixo Z
+
+	li       t4, 73                     # t4 = eixo X final
+	li       t5, 1                      # t5 = eixo Y final
+	li       t6, -19                    # t6 = eixo Z final
+
+	li       s1, 225                    # s1 = distância máxima = 225
 
 	sub      s2, t1, t4                 #(X - Xo)
 	mul      s2, s2, s2                 #(X - Xo) * (X - Xo)
@@ -48,9 +71,21 @@ verificaDistancia:
 	add      s2, s2, s3
 	add      s2, s2, s4
 
-	blt      s2, s1, .chegou         # Distância menor que 15 m
+	blt      s2, s1, .fim               # Distância menor que 15 m
 
-.chegou:
+.fim:
+
+	li       a0, acionaGPS              # Extrai o endereço para acionar o GPS ( = 0)
+	li       a1, 0                      # Desativa a configuração
+	sb       a1, 0(a0)                  # GPS ativado
+
+	li       a0, direcaoMotor           # Extrai o endereço para acionar o motor ( = 0)
+	sb       a1, 0(a0)                  # Para frente, sempre!
+
+	li       a0, freioMao               # Extrai o endereço para desativar o freio de mão ( = 1)
+	li       a1, 1                      # Desativa a configuração
+	sb       a1, 0(a0)                  # Freio de mão desativado
+
 	li       a0, 0                      # Código de saída
 	li       a7, 93                     # Serviço de saída
 	ecall
