@@ -27,6 +27,13 @@
 # Função que configura o carro para andar para frente
 	.globl   preparaVeiculo
 
+# Inicia o programa
+_start:
+	call     main
+	li       a0, 0
+	li       a7, 93
+	ecall
+
 # Prepara o carro para se deslocar
 preparaVeiculo:
 
@@ -39,6 +46,10 @@ preparaVeiculo:
 
 	li       a0, freioMao               # Extrai o endereço para desativar o freio de mão ( = 0)
 	li       a1, 0                      # Desativa a configuração
+	sb       a1, 0(a0)                  # Freio de mão desativado
+
+	li       a0, direcaoVolante         # Extrai o endereço para deixar o volante reto
+	li       a1, -15                    # Desativa a configuração
 	sb       a1, 0(a0)                  # Freio de mão desativado
 
 	ret                                 # Carro já configurado para andar
@@ -73,18 +84,26 @@ verificaDistancia:
 
 	blt      s2, s1, .fim               # Distância menor que 15 m
 
+	call     verificaDistancia          # Loop, até encontrar.
+
 .fim:
 
-	li       a0, acionaGPS              # Extrai o endereço para acionar o GPS ( = 0)
-	li       a1, 0                      # Desativa a configuração
-	sb       a1, 0(a0)                  # GPS ativado
-
 	li       a0, direcaoMotor           # Extrai o endereço para acionar o motor ( = 0)
+	li       a1, 0                      # Desativa a configuração
 	sb       a1, 0(a0)                  # Para frente, sempre!
 
 	li       a0, freioMao               # Extrai o endereço para desativar o freio de mão ( = 1)
 	li       a1, 1                      # Desativa a configuração
 	sb       a1, 0(a0)                  # Freio de mão desativado
+
+	ret                                 # Retorna, já que chegou no fim
+
+# Função principal do programa
+main:
+
+	call     preparaVeiculo
+
+	call     verificaDistancia
 
 	li       a0, 0                      # Código de saída
 	li       a7, 93                     # Serviço de saída
