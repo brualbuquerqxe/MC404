@@ -48,7 +48,9 @@ verificaDistancia:
 	add      s2, s2, s3
 	add      s2, s2, s4
 
-	blt      s1, s2, .naoChegou          # Distância maior que 15 m
+	blt      s2, s1, .chegou         # Distância menor que 15 m
 
 .chegou:
-	
+	li       a0, 0                      # Código de saída
+	li       a7, 93                     # Serviço de saída
+	ecall
