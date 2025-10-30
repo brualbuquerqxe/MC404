@@ -30,7 +30,8 @@ bufferAuxiliar:
 # Função que lê a entrada
 	.globl   leituraEntrada
 
-
+# Função que escreva a saída
+	.globl   escritaSaida
 
 # Função que lida com o primeiro caso
 	.globl   caso01
@@ -167,6 +168,110 @@ caso02:
 	sw       ra, 0(sp)                # Armazena o endereço de retorno
 
 	call     escritaSaida             # Escreve a saída inversa
+
+	mv       a0, bufferEntrada        # Desloca o endereço da entrada
+
+	lw       ra, 0(sp)                # Volta com o endereço de retorno
+	addi     sp, sp, 4                # Desempilha
+
+	ret                               # Retorna
+
+# Função do terceiro caso: converte a entrada da base decimal para hexadecimal
+caso03:
+
+	la       a3, bufferAuxiliar       # Carrega o buffer auxiliar
+
+	add      a4, a3, a1               # Onde estará o '\n'
+
+	li       t1, '\n'                 # Carrega '\n'
+	sb       t1, 0(a4)                # Posiciona o '\n' no final
+
+	li       t2, 0                    # Contador dos byes registrados
+
+	li       t6, 1                    # Armazena valor subtraído
+
+	sub      t1, a1, t6               # Desconsidera o \n
+
+.escritaInverso2:
+
+	add      a4, a3, t1               # Onde estará armazenado o caracter no novo buffer
+
+	add      t3, a0, t2               # Endereço do byte que será escrito
+	lb       t4, 0(t3)                # Carrega o byte
+
+	sb       t4, 0(a4)                # Escreve o byte no buffer
+
+	sub      t1, t1, t6               # Subtrai uma unidade, posição do próximo byte no buffer auxiliar
+
+	add      t2, t2, t6               # Adiciona uma unidade no contador de bytes repassados
+
+	bge      t1, t2, .escritaInverso2 # Se ainda não passou por todos os bytes, lê mais bytes
+
+.converteDecimal:
+
+	li       t1, '\n'                 # Carrega '\n'
+
+	li       t2, 10                   # Muda de casa
+	li       t3, 1                    # Valor multplicado
+	li       t4, 0                    # Soma final
+
+	la       t5, bufferAuxiliar       # Carrega a endereço
+
+.somaDecimal:
+
+	lb       t0, 0(t5)                # Carrega o valor
+	addi     t0, t0, -'0'             # Converte para inteiro
+	mul      t0, t0, t3               # Multiplica pela casa que se encontra
+
+	mul      t3, t3, t2               # Muda a casa multiplicando por 10
+	add      t4, t4, t0               # Soma
+
+	addi     t5, t5, 1                # Próximo byte
+	lb       t0, 0(t5)                # Carrega o valor do próximo byte
+
+	bne      t0, t1, .somaDecimal     # Se não chegou no '\n', continua convertendo o número
+
+.converteHexadecimal: # Se chegou no final do número, muda para hexadecimal
+
+	li       t1, '\n'                 # Carrega '\n'
+	li       t2, 0                    # Contador
+	li       t3, 16                   # Valor que divide na conversão
+
+.dividePor16:
+
+	rem      t5, t4, t3               # Resto da divisão
+	div      t4, t4, t3               # Divide a soma por 16
+
+# AQUI EU COLOCO OS CASOS DE CONVERSÃO PARA ASCII
+# PRECISO ARMAZENAR NO BUFFER AUXILIAR
+
+
+	addi     t2, t2, 1                # Aumento o contador
+
+	beqz     t4, .fimConversao
+
+	call     .dividePor16             # Se ainda tem como dividir, divido!
+
+.fimConversao:
+
+	addi     t2, t2, 1                # Adiciono /n
+
+	la       t3, bufferAuxiliar       # Carrego endereço do buffer novamente
+
+	add      t3, t3, t2               # Somo a posição do '\n'
+
+	sb       t1, t3                   # Passo o '\n' para o buffer
+
+# .................................
+
+	la       a0, bufferAuxiliar       # Move o buffer Auxiliar para o a0, norma ABII
+
+	mv       a1, t2                   # Move a quantidade de byes
+
+	addi     sp, sp, -4               # Empilha
+	sw       ra, 0(sp)                # Armazena o endereço de retorno
+
+	call     caso02                   # Escreve a saída inversa
 
 	mv       a0, bufferEntrada        # Desloca o endereço da entrada
 
