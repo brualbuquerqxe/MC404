@@ -179,7 +179,7 @@ caso02:
 	addi     sp, sp, -4                  # Empilha
 	sw       ra, 0(sp)                   # Armazena o endereço de retorno
 
-	call escritaSaida            # Escreve a saída inversa
+	call     escritaSaida                # Escreve a saída inversa
 
 	la       a0, bufferEntrada           # Desloca o endereço da entrada
 
@@ -306,9 +306,18 @@ main:
 	la       a0, bufferEntrada           # Desloca o endereço da entrada
 
 	li       s2, '1'                     # Caso 01
-	beq      s1, s2, caso01              # Chama a função do primeiro caso
+	beq      s1, s2, .callcaso01         # Chama a função do primeiro caso
 
-	li       s2, '2'                     # Caso 01
-	beq      s1, s2, caso02              # Chama a função do primeiro caso
+	li       s2, '2'                     # Caso 02
+	beq      s1, s2, .callcaso02         # Chama a função do segundo caso
+
+.callcaso01:
+	call     caso01
+	ret
+
+.callcaso02:
+	call     caso02
+	ret
+
 
 	ret                                  # Fim!
