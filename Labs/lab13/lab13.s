@@ -311,6 +311,9 @@ main:
 	li       s2, '2'                     # Caso 02
 	beq      s1, s2, .callcaso02         # Chama a função do segundo caso
 
+	li       s2, '3'                     # Caso 03
+	beq      s1, s2, .callcaso03         # Chama a função do terceiro caso
+
 .callcaso01:
 	call     caso01
 	ret
@@ -319,5 +322,9 @@ main:
 	call     caso02
 	ret
 
+.callcaso03:
+	call     caso03
+	ret
 
+.final:
 	ret                                  # Fim!
