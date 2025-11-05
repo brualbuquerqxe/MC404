@@ -327,12 +327,33 @@ caso04:
 
 	la       a3, bufferEntrada            # Carrega o endereço
 
-
 .converteNumero:
 
 	li       t6, 10                       # Muda de casa
 	li       t3, 1                        # Valor multplicado
 	li       t4, 0                        # Soma final
+	li       s3, 1                        # Se for positivo ou negativo, muda
+
+	lb       t0, 0(a3)                    # Leitura do primeiro byte
+
+	li       s7, '-'                      # Sinal negativo
+	li       s8, '+'                      # Sinal positivo
+
+	beq      s7, t0, .sinalNegativo       # Multiplica por -1
+
+	beq      s8, t0, .sinalPositivo       # Multiplica por 1
+
+	j        .somaNumeroDecimal           # Sem sinal explícito: segue normalmente
+
+.sinalNegativo:
+	li       s3, -1
+	addi     a3, a3, 1                    # Vai para o próximo caracter
+	j        .somaNumeroDecimal
+
+.sinalPositivo:
+	li       s3, 1
+	addi     a3, a3, 1                    # Vai para o próximo caracter
+	j        .somaNumeroDecimal
 
 .somaNumeroDecimal:
 
@@ -356,7 +377,7 @@ caso04:
 
 	addi     a3, a3, 1                    # Avança para o próximo caracter
 
-	mv       a4, t4                       # a4 = primeiro número
+	mul      a4, t4, s3                   # Já que o primeiro número pode ser negativo
 
 	lb       a5, 0(a3)                    # Operador
 
@@ -366,7 +387,7 @@ caso04:
 
 .fimOperacao:
 
-	mv       a6, t4                       # a6 = segundo número
+	mul      a6, t4, s3                   # Já que o segundo número pode ser negativo
 
 	li       t6, '-'                      # Subtração
 	beq      a5, t6, .subtracao
@@ -377,13 +398,23 @@ caso04:
 	li       t6, '*'                      # Multiplicação
 	beq      a5, t6, .multiplicacao
 
-	li       t6, '/'                     # Divisão
+	li       t6, '/'                      # Divisão
 	beq      a5, t6, .divisao
 
 	addi     a0, a4, '0'
 
 .imprimeResultado:
 	beqz     a4, .imprimeZero             # Se o resultado for zero
+
+	li       s10, 0                        # flag: 0=positivo, 1=negativo
+	bltz     a4, .resultadoNegativo
+	j        .resultadoNaoNegativo
+
+.resultadoNegativo:
+	li       s10, 1
+	sub      a4, zero, a4                 # a4 = -a4 (fica positivo para converter dígitos)
+
+.resultadoNaoNegativo:
 
 # Escreve dígitos de trás pra frente no bufferAuxiliar
 	la       t0, bufferAuxiliar           # Ponteiro de escrita (aux)
@@ -404,7 +435,14 @@ caso04:
 	la       t0, bufferAuxiliar           # Último dígito gravado -1
 	addi     t3, t2, -1
 	add      t0, t0, t3
+
 	la       t1, bufferEntrada            # Destino final
+
+# Se for negativo, escreve '-' antes dos dígitos
+	beqz     s10, .copiaReverso
+	li       t4, '-'
+	sb       t4, 0(t1)
+	addi     t1, t1, 1
 
 .copiaReverso:
 	lb       t4, 0(t0)
