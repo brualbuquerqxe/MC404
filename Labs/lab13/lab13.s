@@ -322,7 +322,7 @@ caso03:
 
 caso04:
 	li       t1, '\n'                     # Indica quebra d elinha
-	li       t2, '\s'                     # Indica espaço
+	li       t2, ' '                      # Indica espaço
 	li       t3, 0                        # Contador de espaços (devo ter apenas 2)
 
 	la       a3, bufferEntrada            # Carrega o endereço
@@ -362,7 +362,7 @@ caso04:
 
 	addi     a3, a3, 2                    # Avança para o próximo número, já pulando o espaço
 
-	call     .converteNumero              # Avança para o segundo número
+	jal      .converteNumero              # Avança para o segundo número
 
 .fimOperacao:
 
@@ -377,35 +377,84 @@ caso04:
 	li       t6, '*'                      # Multiplicação
 	beq      a5, t6, .multiplicacao
 
-	li       t6, '\\'                     # Divisão
+	li       t6, '/'                     # Divisão
 	beq      a5, t6, .divisao
 
 	addi     a0, a4, '0'
 
-# FALTA CORRIGIR A IMPRESSÃO, JÁ QUE NÃO ESTÁ CONTABILIZANDO A QUANTIDADE DE CARACTERES
-# VOU FAZER UMA CONTAGEM DE DÍGITOS POR DIVISÃO POR 10
+.imprimeResultado:
+	beqz     a4, .imprimeZero             # Se o resultado for zero
 
-	call     escritaSaida                 # Escreve a saída da operação
+# Escreve dígitos de trás pra frente no bufferAuxiliar
+	la       t0, bufferAuxiliar           # Ponteiro de escrita (aux)
+	li       t2, 0                        # Contador de dígitos
+	li       t3, 10                       # base 10
+	mv       t5, a4                       # Cópia do número
+
+.converteLoop:
+	rem      t6, t5, t3
+	addi     t6, t6, '0'
+	sb       t6, 0(t0)
+	addi     t0, t0, 1
+	addi     t2, t2, 1
+	div      t5, t5, t3
+	bnez     t5, .converteLoop
+
+# Copia invertendo para bufferEntrada (ficar em ordem correta)
+	la       t0, bufferAuxiliar           # Último dígito gravado -1
+	addi     t3, t2, -1
+	add      t0, t0, t3
+	la       t1, bufferEntrada            # Destino final
+
+.copiaReverso:
+	lb       t4, 0(t0)
+	sb       t4, 0(t1)
+	addi     t1, t1, 1
+	addi     t0, t0, -1
+	addi     t2, t2, -1
+	bnez     t2, .copiaReverso
+
+	li       t4, '\n'
+	sb       t4, 0(t1)                    # Adiciona '\n'
+	addi     t1, t1, 1
+
+	la       a0, bufferEntrada
+	sub      a1, t1, a0                   # O tamanho da saída, contando a quebra de linha
+
+	j        .chamaPrint
+
+.imprimeZero:
+	la       t1, bufferEntrada
+	li       t4, '0'
+	sb       t4, 0(t1)
+	li       t4, '\n'
+	sb       t4, 1(t1)
+	la       a0, bufferEntrada
+	li       a1, 2
+
+.chamaPrint:
+	call     escritaSaida
+	ret
 
 .subtracao:
 
 	sub      a4, a4, a6                   # Subtrai o segundo valor do primeiro
-	ret
+	call     .imprimeResultado
 
 .soma:
 
 	add      a4, a4, a6                   # Soma o segundo valor ao primeiro
-	ret
+	call     .imprimeResultado
 
 .multiplicacao:
 
 	mul      a4, a4, a6                   # Multiplica o segundo valor com o primeiro
-	ret
+	call     .imprimeResultado
 
 .divisao:
 
 	div      a4, a4, a6                   # Divide o primeiro valor pelo segundo
-	ret
+	call     .imprimeResultado
 
 # Função principal do programa
 main:
