@@ -2,13 +2,13 @@
 	.section .bss
 
 bufferComando:
-	.skip    3                           # Tamanho do comando
+	.skip    3                            # Tamanho do comando
 
 bufferEntrada:
-	.skip    100000                      # Tamanho desconhecido
+	.skip    100000                       # Tamanho desconhecido
 
 bufferAuxiliar:
-	.skip    100000                      # Tamanho desconhecido
+	.skip    100000                       # Tamanho desconhecido
 
 	.section .text
 
@@ -55,264 +55,292 @@ _start:
 
 	li       a0, 0
 	li       a7, 93
-	ecall                                # Posso usar a chamada de exit
+	ecall                                 # Posso usar a chamada de exit
 
 # Função de leitura
 leituraEntrada:
 
-	li       t5, comandoRead             # Extrai o endereço para sinalizar a leitura ( = 1)
+	li       t5, comandoRead              # Extrai o endereço para sinalizar a leitura ( = 1)
 
-	li       t6, enderecoLeitura         # Extrai o endereço do byte que deve ser lido
+	li       t6, enderecoLeitura          # Extrai o endereço do byte que deve ser lido
 
-	li       t1, 0                       # Contador de caracter
+	li       t1, 0                        # Contador de caracter
 
-	li       t4, '\n'                    # Simboliza a parada da leitura
+	li       t4, '\n'                     # Simboliza a parada da leitura
 
 	la       a0, bufferEntrada
 
 .continuaLeitura:
 
-	li       t2, 1                       # Ativa a configuração
-	sb       t2, 0(t5)                   # Leitura ativada
+	li       t2, 1                        # Ativa a configuração
+	sb       t2, 0(t5)                    # Leitura ativada
 
 .esperaLeitura:
-	lb       t0, 0(t5)                   # lê o registrador de comando
-	bnez     t0, .esperaLeitura          # enquanto for diferente de 0, ainda está lendo
+	lb       t0, 0(t5)                    # lê o registrador de comando
+	bnez     t0, .esperaLeitura           # enquanto for diferente de 0, ainda está lendo
 
-	lb       t3, 0(t6)                   # Carrega o byte que é lido
+	lb       t3, 0(t6)                    # Carrega o byte que é lido
 
-	add      t2, a0, t1                  # Posição que o caracter deve ser gravado
+	add      t2, a0, t1                   # Posição que o caracter deve ser gravado
 
-	sb       t3, 0(t2)                   # Armazena o byte lido no buffer
+	sb       t3, 0(t2)                    # Armazena o byte lido no buffer
 
-	addi     t1, t1, 1                   # Adiciona uma unidade no endereço do buffer
+	addi     t1, t1, 1                    # Adiciona uma unidade no endereço do buffer
 
-	bne      t3, t4, .continuaLeitura    # Enquanto o caracter for diferente de '\n', leio
+	bne      t3, t4, .continuaLeitura     # Enquanto o caracter for diferente de '\n', leio
 
 .fimLeitura:
-	mv       a1, t1                      # Retorna quantidade de bytes lidos
-	la       a0, bufferEntrada           # Retorna endereço base do buffer
+	mv       a1, t1                       # Retorna quantidade de bytes lidos
+	la       a0, bufferEntrada            # Retorna endereço base do buffer
 
-	ret                                  # Encerra a leitura
+	ret                                   # Encerra a leitura
 
 
 # Função do escrita
 escritaSaida:
 
-	li       a6, comandoWrite            # Extrai o endereço para sinalizar a escrita ( = 1)
+	li       a6, comandoWrite             # Extrai o endereço para sinalizar a escrita ( = 1)
 
-	li       a2, enderecoEscrita         # Extrai o endereço do byte que deve ser escrito
+	li       a2, enderecoEscrita          # Extrai o endereço do byte que deve ser escrito
 
-	li       t1, 0                       # Contador de caracter
+	li       t1, 0                        # Contador de caracter
 
 .continuaEscrita:
 
-	beq      t1, a1, .fimEscrita         # Se não tiver mais nada para escrever
+	beq      t1, a1, .fimEscrita          # Se não tiver mais nada para escrever
 
 	add      t2, a0, t1
 
-	lb       a3, 0(t2)                   # Carrega o byte que foi armazenado
+	lb       a3, 0(t2)                    # Carrega o byte que foi armazenado
 
-	sb       a3, 0(a2)                   # Armazena o byte que deve ser escrito no endereço de Escrita
+	sb       a3, 0(a2)                    # Armazena o byte que deve ser escrito no endereço de Escrita
 
-	li       a5, 1                       # Ativa a configuração
-	sb       a5, 0(a6)                   # Escrita ativada
+	li       a5, 1                        # Ativa a configuração
+	sb       a5, 0(a6)                    # Escrita ativada
 
 .esperaEscrita:
-	lb       t0, 0(a6)                   # lê o registrador de comando
-	bnez     t0, .esperaEscrita          # enquanto for diferente de 0, ainda está escrevendo
+	lb       t0, 0(a6)                    # lê o registrador de comando
+	bnez     t0, .esperaEscrita           # enquanto for diferente de 0, ainda está escrevendo
 
-	addi     t1, t1, 1                   # Adiciona uma unidade no endereço do buffer
+	addi     t1, t1, 1                    # Adiciona uma unidade no endereço do buffer
 
-	blt      t1, a1, .continuaEscrita    # Enquanto a mesma quantidade de caracters não forem escritas
+	blt      t1, a1, .continuaEscrita     # Enquanto a mesma quantidade de caracters não forem escritas
 
 .fimEscrita:
 
-	ret                                  # Encerra a escrita
+	ret                                   # Encerra a escrita
 
 # Função do primeiro caso: apenas escreve a entrada
 caso01:
 
-	call     escritaSaida                # Apenas escreve
+	call     escritaSaida                 # Apenas escreve
 
-	ret                                  # Retorna
+	ret                                   # Retorna
 
 # Função do segundo caso: escreve a entrada ao contrário
 caso02:
 
-	la       a3, bufferAuxiliar          # Carrega o buffer auxiliar
+	la       a3, bufferAuxiliar           # Carrega o buffer auxiliar
 
-	add      a4, a3, a1                  # Onde estará o '\n'
-	addi     a4, a4, -1                  # <<< NOVO: coloca no índice a1-1
+	add      a4, a3, a1                   # Onde estará o '\n'
+	addi     a4, a4, -1                   # <<< NOVO: coloca no índice a1-1
 
-	li       t1, '\n'                    # Carrega '\n'
-	sb       t1, 0(a4)                   # Posiciona o '\n' no final
+	li       t1, '\n'                     # Carrega '\n'
+	sb       t1, 0(a4)                    # Posiciona o '\n' no final
 
-	li       t2, 0                       # Contador dos byes registrados
+	li       t2, 0                        # Contador dos byes registrados
 
-	li       t6, 1                       # Armazena valor subtraído
+	li       t6, 1                        # Armazena valor subtraído
 
-	sub      t1, a1, t6                  # Posição do "\n"
-	sub      t1, t1, t6                  # Último caracter útil
+	sub      t1, a1, t6                   # Posição do "\n"
+	sub      t1, t1, t6                   # Último caracter útil
 
 	addi     t5, a1, -1
 
 .escritaInverso:
 
-	add      a4, a3, t1                  # Onde estará armazenado o caracter no novo buffer
+	add      a4, a3, t1                   # Onde estará armazenado o caracter no novo buffer
 
-	add      t3, a0, t2                  # Endereço do byte que será escrito
-	lb       t4, 0(t3)                   # Carrega o byte
+	add      t3, a0, t2                   # Endereço do byte que será escrito
+	lb       t4, 0(t3)                    # Carrega o byte
 
-	sb       t4, 0(a4)                   # Escreve o byte no buffer
+	sb       t4, 0(a4)                    # Escreve o byte no buffer
 
-	sub      t1, t1, t6                  # Subtrai uma unidade, posição do próximo byte no buffer auxiliar
+	sub      t1, t1, t6                   # Subtrai uma unidade, posição do próximo byte no buffer auxiliar
 
-	add      t2, t2, t6                  # Adiciona uma unidade no contador de bytes repassados
+	add      t2, t2, t6                   # Adiciona uma unidade no contador de bytes repassados
 
 	blt      t2, t5, .escritaInverso
 
 .fimEscritaInverso:
 
-	mv       a0, a3                      # Move o buffer Auxiliar para o a0, norma ABII
+	mv       a0, a3                       # Move o buffer Auxiliar para o a0, norma ABII
 
-	addi     sp, sp, -4                  # Empilha
-	sw       ra, 0(sp)                   # Armazena o endereço de retorno
+	addi     sp, sp, -4                   # Empilha
+	sw       ra, 0(sp)                    # Armazena o endereço de retorno
 
-	call     escritaSaida                # Escreve a saída inversa
+	call     escritaSaida                 # Escreve a saída inversa
 
-	la       a0, bufferEntrada           # Desloca o endereço da entrada
+	la       a0, bufferEntrada            # Desloca o endereço da entrada
 
-	lw       ra, 0(sp)                   # Volta com o endereço de retorno
-	addi     sp, sp, 4                   # Desempilha
+	lw       ra, 0(sp)                    # Volta com o endereço de retorno
+	addi     sp, sp, 4                    # Desempilha
 
-	ret                                  # Retorna
+	ret                                   # Retorna
 
 # Função do terceiro caso: converte a entrada da base decimal para hexadecimal
 caso03:
 
-	la       a3, bufferAuxiliar          # Carrega o buffer auxiliar
+	la       a3, bufferAuxiliar           # Carrega o buffer auxiliar
 
-	add      a4, a3, a1                  # Onde estará o '\n'
+	li       t2, 0                        # Contador dos byes registrados
 
-	li       t1, '\n'                    # Carrega '\n'
-	sb       t1, 0(a4)                   # Posiciona o '\n' no final
+	li       t6, 1                        # Armazena valor subtraído
 
-	li       t2, 0                       # Contador dos byes registrados
-
-	li       t6, 1                       # Armazena valor subtraído
-
-	sub      t1, a1, t6                  # Desconsidera o \n
+	sub      t1, a1, t6                   # Desconsidera o \n
+	sub      t1, t1, t6
 
 .escritaInverso2:
 
-	add      a4, a3, t1                  # Onde estará armazenado o caracter no novo buffer
+	add      a4, a3, t2                   # Onde estará armazenado o caracter no novo buffer
 
-	add      t3, a0, t2                  # Endereço do byte que será escrito
-	lb       t4, 0(t3)                   # Carrega o byte
+	add      t3, a0, t1                   # Endereço do byte que será escrito
+	lb       t4, 0(t3)                    # Carrega o byte
 
-	sb       t4, 0(a4)                   # Escreve o byte no buffer
+	sb       t4, 0(a4)                    # Escreve o byte no buffer
 
-	sub      t1, t1, t6                  # Subtrai uma unidade, posição do próximo byte no buffer auxiliar
+	addi     t2, t2, 1                    # avança destino
+	addi     t1, t1, -1                   # recua origem
 
-	add      t2, t2, t6                  # Adiciona uma unidade no contador de bytes repassados
+	bgez     t1, .escritaInverso2         # continua enquanto t1 for maior ou igual a 0
 
-	bge      t1, t2, .escritaInverso2    # Se ainda não passou por todos os bytes, lê mais bytes
+# coloca '\n' ao final do número espelhado
+	la       t5, bufferAuxiliar
+	add      t5, t5, t2                   # Posição logo após o último dígito
+	li       t1, '\n'
+	sb       t1, 0(t5)
 
 .converteDecimal:
 
-	li       t1, '\n'                    # Carrega '\n'
+	li       t1, '\n'                     # Carrega '\n'
 
-	li       t2, 10                      # Muda de casa
-	li       t3, 1                       # Valor multplicado
-	li       t4, 0                       # Soma final
+	li       t2, 10                       # Muda de casa
+	li       t3, 1                        # Valor multplicado
+	li       t4, 0                        # Soma final
 
-	la       t5, bufferAuxiliar          # Carrega a endereço
+	la       t5, bufferAuxiliar           # Carrega a endereço
 
 .somaDecimal:
 
-	lb       t0, 0(t5)                   # Carrega o valor
-	addi     t0, t0, -'0'                # Converte para inteiro
-	mul      t0, t0, t3                  # Multiplica pela casa que se encontra
+	lb       t0, 0(t5)                    # Carrega o valor
 
-	mul      t3, t3, t2                  # Muda a casa multiplicando por 10
-	add      t4, t4, t0                  # Soma
+	beq      t0, t1, .converteHexadecimal # SE for '\n', termina a soma
 
-	addi     t5, t5, 1                   # Próximo byte
-	lb       t0, 0(t5)                   # Carrega o valor do próximo byte
+	addi     t0, t0, -'0'                 # Converte para inteiro
+	mul      t0, t0, t3                   # Multiplica pela casa que se encontra
 
-	bne      t0, t1, .somaDecimal        # Se não chegou no '\n', continua convertendo o número
+	mul      t3, t3, t2                   # Muda a casa multiplicando por 10
+	add      t4, t4, t0                   # Soma
+
+	addi     t5, t5, 1                    # Próximo byte
+	j        .somaDecimal
 
 .converteHexadecimal: # Se chegou no final do número, muda para hexadecimal
 
-	li       t1, '\n'                    # Carrega '\n'
-	li       t2, 0                       # Contador
-	li       t3, 16                      # Valor que divide na conversão
+	li       t1, '\n'                     # Carrega '\n'
+	li       t2, 0                        # Contador
+	li       t3, 16                       # Valor que divide na conversão
 
 .dividePor16:
 
-	rem      t5, t4, t3                  # Resto da divisão
-	div      t4, t4, t3                  # Divide a soma por 16
+	rem      t5, t4, t3                   # Resto da divisão
+	div      t4, t4, t3                   # Divide a soma por 16
 
-# AQUI EU COLOCO OS CASOS DE CONVERSÃO PARA ASCII
-# PRECISO ARMAZENAR NO BUFFER AUXILIAR
+	li       t6, 10                       # Valor máximo numérico
+	blt      t5, t6, .valorNumerico       # Encontrou o valor e coloca no buffer
+	j        .valorLetra                  # Número maior do que 9 será convertido em letra
 
+.valorNumerico:
+	addi     t5, t5, '0'                  # Converte em ASCII
+	j        .continuacao                 # Segue
 
-	addi     t2, t2, 1                   # Aumento o contador
+.valorLetra:
+	addi     t5, t5, -10
+	addi     t5, t5, 'A'                  # Converte em ASCII
 
-	beqz     t4, .fimConversao
+.continuacao:
 
-	call     .dividePor16                # Se ainda tem como dividir, divido!
+	la       s6, bufferAuxiliar           # Carrega o endereço onde colocarei os dígitos
+
+	add      s6, s6, t2                   # Posição do caracter
+
+	sb       t5, 0(s6)                    # Armazena o caracter na memória
+
+	addi     t2, t2, 1                    # Aumento o contador
+
+	bnez     t4, .dividePor16             # Se ainda tem como dividir, divido!
 
 .fimConversao:
 
-	addi     t2, t2, 1                   # Adiciono /n
+	la       t3, bufferAuxiliar           # Carrego endereço do buffer novamente
 
-	la       t3, bufferAuxiliar          # Carrego endereço do buffer novamente
+	add      t3, t3, t2                   # Somo a posição do '\n'
 
-	add      t3, t3, t2                  # Somo a posição do '\n'
+	sb       t1, 0(t3)                    # Passo o '\n' para o buffer
 
-	sb       t1, 0(t3)                   # Passo o '\n' para o buffer
+	addi     t2, t2, 1                    # Adiciono /n
 
-# .................................
+	mv       a1, t2                       # Move a quantidade de byes
 
-	la       a0, bufferAuxiliar          # Move o buffer Auxiliar para o a0, norma ABII
+	la       t0, bufferAuxiliar           
+	la       t1, bufferEntrada           
+	mv       t2, a1                        
 
-	mv       a1, t2                      # Move a quantidade de byes
+.copiaHexadecimal:
+	beqz     t2, .finalizaCopia
+	lb       t4, 0(t0)
+	sb       t4, 0(t1)
+	addi     t0, t0, 1
+	addi     t1, t1, 1
+	addi     t2, t2, -1
+	j        .copiaHexadecimal
 
-	addi     sp, sp, -4                  # Empilha
-	sw       ra, 0(sp)                   # Armazena o endereço de retorno
+.finalizaCopia:
+	la       a0, bufferEntrada            # Move o buffer Entrada para o a0, norma ABII
 
-	call     caso02                      # Escreve a saída inversa
+	addi     sp, sp, -4                   # Empilha
+	sw       ra, 0(sp)                    # Armazena o endereço de retorno
 
-	la       a0, bufferEntrada           # Desloca o endereço da entrada
+	call     caso02                       # Escreve a saída inversa
 
-	lw       ra, 0(sp)                   # Volta com o endereço de retorno
-	addi     sp, sp, 4                   # Desempilha
+	la       a0, bufferEntrada            # Desloca o endereço da entrada
 
-	ret                                  # Retorna
+	lw       ra, 0(sp)                    # Volta com o endereço de retorno
+	addi     sp, sp, 4                    # Desempilha
+
+	ret                                   # Retorna
 
 # Função principal do programa
 main:
 
-	call     leituraEntrada              # Leitura da entrada até o '\n'
+	call     leituraEntrada               # Leitura da entrada até o '\n'
 
-	la       t0, bufferEntrada           # endereço do buffer onde leituraEntrada escreveu
+	la       t0, bufferEntrada            # endereço do buffer onde leituraEntrada escreveu
 
 	lb       s1, 0(t0)
 
-	call     leituraEntrada              # Leitura da entrada até o '\n'
+	call     leituraEntrada               # Leitura da entrada até o '\n'
 
-	la       a0, bufferEntrada           # Desloca o endereço da entrada
+	la       a0, bufferEntrada            # Desloca o endereço da entrada
 
-	li       s2, '1'                     # Caso 01
-	beq      s1, s2, .callcaso01         # Chama a função do primeiro caso
+	li       s2, '1'                      # Caso 01
+	beq      s1, s2, .callcaso01          # Chama a função do primeiro caso
 
-	li       s2, '2'                     # Caso 02
-	beq      s1, s2, .callcaso02         # Chama a função do segundo caso
+	li       s2, '2'                      # Caso 02
+	beq      s1, s2, .callcaso02          # Chama a função do segundo caso
 
-	li       s2, '3'                     # Caso 03
-	beq      s1, s2, .callcaso03         # Chama a função do terceiro caso
+	li       s2, '3'                      # Caso 03
+	beq      s1, s2, .callcaso03          # Chama a função do terceiro caso
 
 .callcaso01:
 	call     caso01
@@ -327,4 +355,4 @@ main:
 	ret
 
 .final:
-	ret                                  # Fim!
+	ret                                   # Fim!
