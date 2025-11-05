@@ -292,9 +292,9 @@ caso03:
 
 	mv       a1, t2                       # Move a quantidade de byes
 
-	la       t0, bufferAuxiliar           
-	la       t1, bufferEntrada           
-	mv       t2, a1                        
+	la       t0, bufferAuxiliar
+	la       t1, bufferEntrada
+	mv       t2, a1
 
 .copiaHexadecimal:
 	beqz     t2, .finalizaCopia
@@ -320,6 +320,93 @@ caso03:
 
 	ret                                   # Retorna
 
+caso04:
+	li       t1, '\n'                     # Indica quebra d elinha
+	li       t2, '\s'                     # Indica espaço
+	li       t3, 0                        # Contador de espaços (devo ter apenas 2)
+
+	la       a3, bufferEntrada            # Carrega o endereço
+
+
+.converteNumero:
+
+	li       t6, 10                       # Muda de casa
+	li       t3, 1                        # Valor multplicado
+	li       t4, 0                        # Soma final
+
+.somaNumeroDecimal:
+
+	lb       t0, 0(a3)                    # Leitura do primeiro byte
+
+	beq      t0, t2, .operacaoMatematica  # Se o valor for de espaço, cheguei na operação matemática
+
+	beq      t0, t1, .fimOperacao         # Se for quebra de linha, cheguei no final da operação
+
+	addi     t0, t0, -'0'                 # Converte para inteiro
+
+	mul      t4, t4, t6                   # Multiplica pela casa que se encontra
+
+	add      t4, t4, t0                   # Soma
+
+	addi     a3, a3, 1                    # Avança para o próximo caracter
+
+	j        .somaNumeroDecimal
+
+.operacaoMatematica:
+
+	addi     a3, a3, 1                    # Avança para o próximo caracter
+
+	mv       a4, t4                       # a4 = primeiro número
+
+	lb       a5, 0(a3)                    # Operador
+
+	addi     a3, a3, 2                    # Avança para o próximo número, já pulando o espaço
+
+	call     .converteNumero              # Avança para o segundo número
+
+.fimOperacao:
+
+	mv       a6, t4                       # a6 = segundo número
+
+	li       t6, '-'                      # Subtração
+	beq      a5, t6, .subtracao
+
+	li       t6, '+'                      # Soma
+	beq      a5, t6, .soma
+
+	li       t6, '*'                      # Multiplicação
+	beq      a5, t6, .multiplicacao
+
+	li       t6, '\\'                     # Divisão
+	beq      a5, t6, .divisao
+
+	addi     a0, a4, '0'
+
+# FALTA CORRIGIR A IMPRESSÃO, JÁ QUE NÃO ESTÁ CONTABILIZANDO A QUANTIDADE DE CARACTERES
+# VOU FAZER UMA CONTAGEM DE DÍGITOS POR DIVISÃO POR 10
+
+	call     escritaSaida                 # Escreve a saída da operação
+
+.subtracao:
+
+	sub      a4, a4, a6                   # Subtrai o segundo valor do primeiro
+	ret
+
+.soma:
+
+	add      a4, a4, a6                   # Soma o segundo valor ao primeiro
+	ret
+
+.multiplicacao:
+
+	mul      a4, a4, a6                   # Multiplica o segundo valor com o primeiro
+	ret
+
+.divisao:
+
+	div      a4, a4, a6                   # Divide o primeiro valor pelo segundo
+	ret
+
 # Função principal do programa
 main:
 
@@ -342,6 +429,9 @@ main:
 	li       s2, '3'                      # Caso 03
 	beq      s1, s2, .callcaso03          # Chama a função do terceiro caso
 
+	li       s2, '4'                      # Caso 04
+	beq      s1, s2, .callcaso04          # Chama a função do quarto caso
+
 .callcaso01:
 	call     caso01
 	ret
@@ -352,6 +442,10 @@ main:
 
 .callcaso03:
 	call     caso03
+	ret
+
+.callcaso04:
+	call     caso04
 	ret
 
 .final:
