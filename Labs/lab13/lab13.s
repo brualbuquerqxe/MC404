@@ -419,7 +419,7 @@ caso04:
 # Escreve dígitos de trás pra frente no bufferAuxiliar
 	la       t0, bufferAuxiliar           # Ponteiro de escrita (aux)
 	li       t2, 0                        # Contador de dígitos
-	li       t3, 10                       # base 10
+	li       t3, 10                       # Base 10
 	mv       t5, a4                       # Cópia do número
 
 .converteLoop:
