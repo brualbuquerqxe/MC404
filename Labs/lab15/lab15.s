@@ -12,39 +12,56 @@
 
 int_handler:
 
+	addi   sp, sp, -20                                                      # Salva na pilha o contexto
+
+	sw     t0, 0(sp)
+	sw     t1, 4(sp)
+	sw     a0, 8(sp)
+	sw     a1, 12(sp)
+	sw     a7, 16(sp)
+
 	csrr   t0, mcause                                                       # Leitura da causa da interrupção
 	li     t1, 8                                                            # ECALL from U-mode
 	bne    t1, t0, .end_int_handler
 
 	/*     syscall_set_engine_and_steering */
-	li     t2, 10                                                           # Carrega o ID da syscall
-	beq    a7, t2, syscall_set_engine_and_steering                          # Liga o motor e regula a direção
+	li     t1, 10                                                           # Carrega o ID da syscall
+	beq    a7, t1, syscall_set_engine_and_steering                          # Liga o motor e regula a direção
 
 	/*     syscall_set_hand_brake */
-	li     t2, 11                                                           # Carrega o ID da syscall
-	beq    a7, t2, syscall_set_hand_brake                                   # Ativa ou desativa o freio de mão
+	li     t1, 11                                                           # Carrega o ID da syscall
+	beq    a7, t1, syscall_set_hand_brake                                   # Ativa ou desativa o freio de mão
 
 	/*     Se chegou aqui, não reconhece a syscall e recupera o contexto */
 .end_int_handler:
+
 	csrr   t0, mepc                                                         # load return address
 	addi   t0, t0, 4                                                        # adds 4 to the return address (to return after ecall)
 	csrw   mepc, t0                                                         # stores the return address back on mepc
+	
+	lw     t0, 0(sp)
+	lw     t1, 4(sp)
+	lw     a0, 8(sp)
+	lw     a1, 12(sp)
+	lw     a7, 16(sp)
+
+	addi   sp, sp, 20                                                      # Desempilha o contexto
+	
 	mret                                                                    # Recover remaining context (pc <- mepc)
 
 	/*     syscall_set_engine_and_steering */
 syscall_set_engine_and_steering:
-	li     t3, direcaoMotor                                                 # Extrai o endereço para acionar o motor ( = 1)
-	sb     a0, 0(t3)                                                        # Para frente, sempre!
+	li     t1, direcaoMotor                                                 # Extrai o endereço para acionar o motor ( = 1)
+	sb     a0, 0(t1)                                                        # Para frente, sempre!
 
-	li     t4, direcaoVolante                                               # Extrai o endereço para deixar o volante reto
-	sb     a1, 0(t4)                                                        # Freio de mão desativado
-
+	li     t1, direcaoVolante                                               # Extrai o endereço para deixar o volante reto
+	sb     a1, 0(t1)                                                        # Freio de mão desativado
 	j      .end_int_handler                                                 # Retorna do handler
 
 	/*     syscall_set_hand_brake */
 syscall_set_hand_brake:
-	li     t3, freioMao                                                     # Extrai o endereço do freio de mão
-	sb     a0, 0(t3)                                                        # Para frente, sempre!
+	li     t1, freioMao                                                     # Extrai o endereço do freio de mão
+	sb     a0, 0(t1)                                                        # Para frente, sempre!
 
 	j      .end_int_handler                                                 # Retorna do handler
 
