@@ -1,15 +1,6 @@
 	.text
 	.align 4
 
-# Armazena o eixo X da última posição do carro
-	.set   eixoX, 0xFFFF0110
-
-# Armazena o eixo Y da última posição do carro
-	.set   eixoY, 0xFFFF0114
-
-# Armazena o eixo Z da última posição do carro
-	.set   eixoZ, 0xFFFF0118
-
 # Define a direção do volante ( - = e + = d )
 	.set   direcaoVolante, 0xFFFF0120
 
@@ -32,6 +23,7 @@ int_handler:
 	/*     syscall_set_hand_brake */
 	li     t2, 11                                                           # Carrega o ID da syscall
 	beq    a7, t2, syscall_set_hand_brake                                   # Ativa ou desativa o freio de mão
+
 	/*     Se chegou aqui, não reconhece a syscall e recupera o contexto */
 .end_int_handler:
 	csrr   t0, mepc                                                         # load return address
@@ -88,8 +80,4 @@ control_logic:
 	li     a1, -15                                                          # Volante levemente virado para a esquerda
 	ecall                                                                   # Executa a chamada do sistema
 
-	j      control_logic
-
-.fim:
-
-	ret                                                                     # Retorna, já que chegou no fim
+	ret                                                                     # Retorna, já que ele já está andando no ângulo certo!
